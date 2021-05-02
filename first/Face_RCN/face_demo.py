@@ -1,6 +1,9 @@
-from utils import take_photo
-from FaceRCN import FaceRCN
-import time
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/' + '..'))
+
+from utils.take_photo import take_photo
+from Face_RCN.FaceRCN import FaceRCN
 
 def main():
     # 建立一个人脸检测对象

@@ -3,9 +3,10 @@ import numpy as np
 
 from aip import AipFace
 
-from utils import to_base64, take_photo
-from utils import judge_face, crop_face
-from utils import det_options, register_options
+from .utils.to_base64 import to_base64
+from .utils.take_photo import take_photo
+from .utils.face_utils import *
+from .utils.params_settings import *
 
 # 百度云API参数
 APP_ID = '23931013'
