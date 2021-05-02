@@ -1,6 +1,6 @@
-from dish import Dish
-from user import User
-from plate import Plate
+from first.dish import Dish
+from first.user import User
+from first.platefirst import PlateFirst
 from database import Database
 
 
@@ -22,7 +22,7 @@ def pay(dish_prices: float, user_balance: float, db: Database):
 if __name__ == '__main__':
     dish = Dish()
     user = User()
-    plate = Plate(dish.sumInfo(), user.sumInfo())
+    plate = PlateFirst(dish.sumInfo(), user.sumInfo())
     plate_info = plate.sumInfo()
     db = Database("mongodb://localhost:27017/", "smartCanteen")
     pass

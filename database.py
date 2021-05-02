@@ -83,8 +83,3 @@ class Database:
         :return: plate: 字典类型，返回该盘子的相关信息
         """
         pass
-
-
-if __name__ == '__main__':
-    db = Database("mongodb://localhost:27017/", "smartCanteen")
-    pass

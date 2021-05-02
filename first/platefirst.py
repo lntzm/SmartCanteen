@@ -1,4 +1,4 @@
-class Plate:
+class PlateFirst:
     def __init__(self, dish: dict, user: dict):
         self.id = 0             # 盘子ID
         self.eaten = False      # 第一次，没有吃过
@@ -7,6 +7,14 @@ class Plate:
         # 重命名dish和user中的键id
         self.dish["dish_id"] = self.dish.pop("_id")
         self.user["user_id"] = self.user.pop("_id")
+
+    def getID(self):
+        """
+        二维码识别获取盘子ID
+        :param
+        :return:
+        """
+        pass
 
     def sumInfo(self):
         """
