@@ -5,21 +5,17 @@ class Dish:
         self.weight = 0     # 菜品重量
         self.price = 0      # 菜品价格
 
-    def getName(self):
+    def RecognizeDish(self, baiduAI, image):
         """
-        菜品识别获取菜品名
-        :param
-        :return:
+        菜品识别获取菜品名与卡路里
+        :param baiduAI: BaiduAPI类的一个对象，提供识别接口
+        :param image: 输入图片
         """
-        pass
+        self.name, _, self.calories = baiduAI.getDishResult(image)
+        if not self.name:
+            return False
+        return True
 
-    def getCalories(self):
-        """
-        菜品识别获取菜品卡路里
-        :param
-        :return:
-        """
-        pass
 
     def getWeight(self):
         """
