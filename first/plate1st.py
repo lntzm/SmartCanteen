@@ -1,4 +1,4 @@
-class PlateFirst:
+class Plate1st:
     def __init__(self, dish: dict, user: dict):
         self.id = 0             # 盘子ID
         self.eaten = False      # 第一次，没有吃过
@@ -8,13 +8,18 @@ class PlateFirst:
         self.dish["dish_id"] = self.dish.pop("_id")
         self.user["user_id"] = self.user.pop("_id")
 
-    def getID(self):
+    def getID(self, baiduAI, image) -> bool:
         """
         二维码识别获取盘子ID
-        :param
-        :return:
+        :param baiduAI: BaiduAPI类的一个对象，提供识别接口
+        :param image: 输入图片
+        :return 是否成功获取盘子ID
         """
-        pass
+        self.id = baiduAI.getNumberResult(image)
+        if not self.id:
+            print("> dish_id not found")
+            return False
+        return True
 
     def sumInfo(self):
         """

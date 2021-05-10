@@ -1,4 +1,4 @@
-class PlateSecond:
+class Plate2nd:
     def __init__(self):
         self.id = 0             # 盘子ID
         self.eaten = True       # 第二次，已经吃过

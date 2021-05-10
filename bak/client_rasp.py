@@ -8,11 +8,12 @@ import io
 import picamera
 import matplotlib.pyplot as plt
 from PIL import Image
-import baiduAI
+import baiduAPI
 import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 import os
 from multiprocessing import Process, Queue
+
 
 # def b64EncodeCV(frame):
 #     img = base64.b64decode(frame)
@@ -29,6 +30,7 @@ from multiprocessing import Process, Queue
 def CVEncodeb64(frame):
     encoded, buffer = cv2.imencode('.jpg', frame)
     return base64.b64encode(buffer)
+
 
 def b64DecodeCV(frame):
     img = base64.b64decode(frame)
@@ -65,6 +67,7 @@ def splitImg(image):
     cv2.imwrite('img_split.jpg', img_marked)
     return images, locs, img_marked
 
+
 def mergeFirst(name, prob, calorie, info_first):
     # first.xlsx: eater_id, dish_id, name, prob, cal, weight, time
     nowStruct = time.localtime(int(time.time()))
@@ -75,6 +78,7 @@ def mergeFirst(name, prob, calorie, info_first):
     for i, key in enumerate(info_first.keys()):
         info_first[key].append(value_first[i])
     return info_first
+
 
 def cv2AddChineseText(img, text, position, textColor=(255, 0, 0), textSize=15):
     if isinstance(img, np.ndarray):  # 判断是否OpenCV图片类型
@@ -87,6 +91,7 @@ def cv2AddChineseText(img, text, position, textColor=(255, 0, 0), textSize=15):
     draw.text(position, text, textColor, font=fontStyle)
     # 转换回OpenCV格式
     return cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
+
 
 def markInfo(image, infos, locs):
     infos = pd.DataFrame(infos)
@@ -102,6 +107,7 @@ def markInfo(image, infos, locs):
             line += 15
     return image
 
+
 # def recognizeDish(info_first, images, image_access_token, img_marked, locs):
 #     for image in images:
 #         print("> recognizing")
@@ -113,11 +119,13 @@ def markInfo(image, infos, locs):
 def recognizeDish(images, image_access_token):
     for image in images:
         print("> recognizing")
-        name, prob, calorie = baiduAI.getDishResult(image_access_token, CVEncodeb64(image))
+        name, prob, calorie = baiduAPI.getDishResult(image_access_token, CVEncodeb64(image))
     return name, prob, calorie
 
+
 # 全局变量
-image_access_token = baiduAI.fetchToken(baiduAI.IMAGE_API_KEY, baiduAI.IMAGE_SECRET_KEY)
+image_access_token = baiduAPI.fetchToken(baiduAPI.IMAGE_API_KEY, baiduAPI.IMAGE_SECRET_KEY)
+
 
 def screen_show(info_first):
     cap = cv2.VideoCapture(0)
@@ -162,6 +170,7 @@ def main_process(q, info):
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
+
 def main():
     keys_first = ['name', 'probability', 'calorie', 'time']
     # keys_second = ['name',  'time']
@@ -169,16 +178,15 @@ def main():
 
     info_first = {key_first: [] for key_first in keys_first}
     # info_second = {key_second: [] for key_second in keys_second}
-    
+
     # cap = cv2.VideoCapture(0)
     # ret, frame = cap.read()
     # _, show = cap.read()
     # 第一个进程，用于显示
-    thread1 = Process(target=screen_show, args=(info_first, ))
+    thread1 = Process(target=screen_show, args=(info_first,))
     thread1.start()
     # 等待线程1结束
     thread1.join()
-
 
 
 if __name__ == '__main__':

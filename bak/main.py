@@ -9,7 +9,7 @@ from PIL import Image
 from multiprocessing import Process, Queue
 from first.dish import Dish
 from first.user import User
-from first.platefirst import PlateFirst
+from first.plate1st import Plate1st
 from database import Database
 
 
@@ -136,7 +136,7 @@ def main_process(q):
 
         # 返回各分割图片识别结果
         for image in images:
-            plate = PlateFirst(dish.sumInfo(), user.sumInfo(), image)
+            plate = Plate1st(dish.sumInfo(), user.sumInfo(), image)
             plate_info = plate.sumInfo()
             plate.dish.RecognizeDish(CVEncodeb64(image))
             # 盘子ID需要确定是否识别到
