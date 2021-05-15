@@ -1,10 +1,11 @@
-from Face_RCN.FaceRCN import FaceRCN
+from first.Face_RCN.FaceRCN import FaceRCN
 import cv2
+
 
 class User:
     def __init__(self):
-        self.id = 0         # 用户ID
-        self.balance = 0    # 余额
+        self.id = 0  # 用户ID
+        self.balance = 0  # 余额
         self.__faceRCN = FaceRCN()  # 人脸识别api
 
     def getID(self, img_rgb, group_id="test"):
@@ -16,10 +17,10 @@ class User:
 
         # 进行人脸搜索
         search_result = self.__faceRCN.face_search(img_rgb, group_id)
-        if search_result is not None:   # 如果找到的话 返回用户id
+        if search_result is not None:  # 如果找到的话 返回用户id
             return search_result['user_id']
         else:
-            return None     # 没找到
+            return None  # 没找到
 
     def getBalance(self):
         """
@@ -39,10 +40,11 @@ class User:
             "balance": self.balance
         }
 
+
 if __name__ == '__main__':
 
     # 测试getID
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
     while (cap.isOpened()):
         ret, frame = cap.read()
@@ -55,6 +57,4 @@ if __name__ == '__main__':
     cv2.destroyAllWindows()
 
     user = User()
-    print(user.getID(frame))    # 打印搜索到的用户id
-
-
+    print(user.getID(frame))  # 打印搜索到的用户id
