@@ -22,8 +22,23 @@ def pay(dish_prices: float, user_balance: float, db: Database):
     """
     pass
 
+def splitImg(image):
+    # 先将图像转化成灰度，再转化成二值图像
+    mask = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
+    _, mask = cv2.threshold(mask, 185, 255, cv2.THRESH_BINARY)
+    # 检测边缘
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    images = []
+    for c in contours:
+        _, r = cv2.minEnclosingCircle(c)  # 找到最小圆，并返回圆心坐标和半径
+        x, y, w, h = cv2.boundingRect(c)
+        # x, y, r = (int(x), int(y), int(r))
+        if 100 < r < 300:
+            img_cut = image[y: y + h, x: x + w]
+            # cv2.imwrite('img_cut.jpg', img_cut)
+            images.append(img_cut)
+    return images
 
-# TODO: 将多线程改为多进程
 def screen_show():
     cap = cv2.VideoCapture(0)
     # 由q传递参数给第二个进程
@@ -32,18 +47,28 @@ def screen_show():
     thread2 = Process(target=main_process, args=(q,))
     thread2.start()
 
+    accord = 0
+
     while True:
         ret, show = cap.read()
-        q.put(show)
         if not ret:
             print('No camera')
             continue
+
+        # 传递帧给main_process进程，这里取隔5帧发送一次
+        if accord == 5:
+            q.put(show)
+            accord = 0
+        else:
+            accord += 1
         # cv2.namedWindow('image', cv2.WINDOW_NORMAL)
         # cv2.reszieWindow('image', 680, 400)
         cv2.imshow('image', show)
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-    # 等待线程2结束
+
+    # 等待进程2结束
     thread2.join()
     cap.release()
     cv2.destroyAllWindows()
@@ -56,35 +81,39 @@ def main_process(q):
         # if not ret:
         #     print('No Camera')
         #     continue
-        frame = q.get()
 
-        images, locs, img_marked = splitImg(frame)
+        frame = q.get()
+        images = splitImg(frame)
 
         if not images:
             # show = frame
             continue
 
+        # 新的识别，添加一个判断是否为新用户，并创建一个user类
+        user = User()
         # 返回各分割图片识别结果
         for image in images:
-            # TODO: 重构以下逻辑
-            # plate = Plate1st(dish.sumInfo(), user.sumInfo(), image)
-            # plate_info = plate.sumInfo()
+            # 创建dish类和plate1st类
+            dish = Dish()
+            plate = Plate1st(dish.sumInfo(), user.sumInfo())
+            plate_info = plate.sumInfo()
 
-            # plate.dish.RecognizeDish(CVEncodeb64(image))
-            #
-            # # 盘子ID需要确定是否识别到
-            # no_dish_id = plate.RecognizeID(CVEncodeb64(image))
+            # 转码可以合并到splitimage()中
+            image_buffer = CVEncodeb64(image)
+            dish.RecognizeDish(image_buffer)
+            plate.getID(image_buffer)
             pass
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        # 中断应该screen_show内定义即可
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
 
 
 if __name__ == '__main__':
-    dish = Dish()
-    user = User()
-    plate = Plate1st(dish.sumInfo(), user.sumInfo())
-    plate_info = plate.sumInfo()
+    # dish = Dish()
+    # user = User()
+    # plate = Plate1st(dish.sumInfo(), user.sumInfo())
+    # plate_info = plate.sumInfo()
     db = Database("mongodb://localhost:27017/", "smartCanteen")
 
     # init camera
@@ -94,7 +123,7 @@ if __name__ == '__main__':
     # 第一个进程，用于主程序执行
     thread1 = Process(target=main_process, args=())
     thread1.start()
-    # 等待线程1结束
+    # 等待进程1结束
     thread1.join()
 
     pass
