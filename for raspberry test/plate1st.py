@@ -19,6 +19,8 @@ class Plate1st:
         if not self.id:
             print("> dish_id not found")
             return False
+        else:
+            print(self.id)
         return True
 
     def sumInfo(self):

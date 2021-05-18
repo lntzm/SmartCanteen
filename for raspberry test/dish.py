@@ -13,7 +13,11 @@ class Dish:
         """
         self.name, _, self.calories = baiduAPI.getDishResult(image_buffer)
         if not self.name:
+            print("RecognizeDish false")
             return False
+        else:
+            print(self.name)
+            print(self.calories)
         return True
 
 

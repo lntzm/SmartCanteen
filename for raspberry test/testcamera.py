@@ -7,7 +7,7 @@ start = time.perf_counter()
 
 while True:
     ret, frame = cap.read()
-    print(frame)
+    
     if not ret:
         print("No camera")
         break
