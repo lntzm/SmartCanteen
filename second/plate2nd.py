@@ -12,12 +12,13 @@ class Plate2nd:
         """
         pass
 
-    def getWeight(self):
+    def getWeight(self, hx711):
         """
         称重获取剩余重量
         :param
         :return:
         """
+        self.rest_weight = hx711.get_weight_mean(5)
         pass
 
     def getInfoBefore(self):
