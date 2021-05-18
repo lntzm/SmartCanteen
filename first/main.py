@@ -108,5 +108,4 @@ if __name__ == '__main__':
     thread1.start()
     # 等待进程1结束
     thread1.join()
-
     pass
