@@ -84,7 +84,7 @@ class BaiduAPI:
             else:
                 return data['name'], data['probability'], None
 
-    def getNumberResult(self, access_token, image):
+    def getNumberResult(self, image):
         """
             调用数字识别接口并获得结果
         """
