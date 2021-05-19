@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from .to_base64 import to_base64
+from ImageHandle import CVEncodeb64
 
 """人脸质量判断"""
 def judge_face(face_list, detailed=False):

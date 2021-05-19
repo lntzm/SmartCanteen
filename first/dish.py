@@ -5,15 +5,19 @@ class Dish:
         self.weight = 0     # 菜品重量
         self.price = 0      # 菜品价格
 
-    def RecognizeDish(self, baiduAI, image):
+    def RecognizeDish(self, baiduAPI, image_buffer):
         """
         菜品识别获取菜品名与卡路里
         :param baiduAI: BaiduAPI类的一个对象，提供识别接口
         :param image: 输入图片
         """
-        self.name, _, self.calories = baiduAI.getDishResult(image)
+        self.name, _, self.calories = baiduAPI.getDishResult(image_buffer)
         if not self.name:
+            print("RecognizeDish false")
             return False
+        else:
+            print("> dish_name:", self.name)
+            print("> dish_calories:", self.calories)
         return True
 
 

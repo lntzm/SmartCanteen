@@ -1,12 +1,10 @@
 import cv2
 import numpy as np
-
 from aip import AipFace
 
-from .utils.to_base64 import to_base64
-from .utils.take_photo import take_photo
-from .utils.face_utils import *
-from .utils.params_settings import *
+from ImageHandle import CVEncodeb64
+from first.Face_RCN.utils.face_utils import *
+from first.Face_RCN.utils.params_settings import *
 
 # 百度云API参数
 APP_ID = '23931013'
@@ -19,7 +17,7 @@ python-sdk tutorial
 https://ai.baidu.com/ai-doc/FACE/ek37c1qiz#%E5%AE%89%E8%A3%85%E4%BA%BA%E8%84%B8%E8%AF%86%E5%88%AB-python-sdk
 """
 
-class FaceRCN():
+class FaceRCN:
 
     def __init__(self):
         # 建立一个人脸API的对象
@@ -34,7 +32,7 @@ class FaceRCN():
     """
     def face_detect(self, img_rgb, face_field="beauty,quality"):
 
-        img64 = to_base64(img_rgb)
+        img64 = CVEncodeb64(img_rgb)
         det_options["face_field"] = face_field
         face_result = self.client.detect(img64, image_type, det_options)
 
@@ -110,7 +108,7 @@ class FaceRCN():
     """
     def face_search(self, img_rgb, group_id):     
 
-        img64 = to_base64(img_rgb)
+        img64 = CVEncodeb64(img_rgb)
         # 调API在人脸库进行搜索
         face_result =  self.client.search(img64, image_type, group_id)
 

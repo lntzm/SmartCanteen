@@ -16,8 +16,8 @@ class Dish:
             print("RecognizeDish false")
             return False
         else:
-            print(self.name)
-            print(self.calories)
+            print("菜名：",str(self.name))
+            print("单位卡路里：",str(self.calories))
         return True
 
 

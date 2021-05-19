@@ -1,4 +1,4 @@
-from first.Face_RCN.FaceRCN import FaceRCN
+from Face_RCN.FaceRCN import FaceRCN
 import cv2
 
 
@@ -57,4 +57,4 @@ if __name__ == '__main__':
     cv2.destroyAllWindows()
 
     user = User()
-    print(user.getID(frame))  # 打印搜索到的用户id
+    # print(user.getID(frame))  # 打印搜索到的用户id

@@ -20,7 +20,7 @@ class Plate1st:
             print("> dish_id not found")
             return False
         else:
-            print(self.id)
+            print("菜品ID：",str(self.id))
         return True
 
     def sumInfo(self):
