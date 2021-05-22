@@ -3,6 +3,10 @@ from database import Database
 from ImageHandle import *
 import first.main1st
 
+from HX711 import HX711
+import RPi.GPIO as GPIO
+import time
+
 def main_process(process_conn):
     while True:
         frame = process_conn.get()
