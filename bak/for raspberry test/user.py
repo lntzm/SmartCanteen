@@ -1,4 +1,5 @@
-from Face_RCN.FaceRCN import FaceRCN
+import FaceRCN
+from FaceRCN import FaceRCN
 import cv2
 
 
