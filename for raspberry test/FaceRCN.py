@@ -1,10 +1,11 @@
 import cv2
 import numpy as np
+
 from aip import AipFace
 
 from ImageHandle import CVEncodeb64
-from first.Face_RCN.utils.face_utils import *
-from first.Face_RCN.utils.params_settings import *
+from face_utils import *
+from params_settings import *
 
 # 百度云API参数
 APP_ID = '23931013'
