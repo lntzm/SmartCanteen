@@ -12,7 +12,7 @@ from multiprocessing import Process, Queue
 def recognize(q):
     while True:
         frame = q.get()
-        images = splitImg(frame)
+        images, locs = splitImg(frame)
 
         if not images:
             print("分割不成功")
