@@ -2,16 +2,16 @@ import cv2
 import numpy as np
 import baiduAPI
 from baiduAPI import BaiduAPI
-from dish import Dish
-from user import User
-from plate1st import Plate1st
+from first.dish import Dish
+from first.user import User
+from first.plate1st import Plate1st
 from database import Database
 from ImageHandle import *
 from multiprocessing import Process, Queue
 
-def main_process(process_conn):
+def recognize(q):
     while True:
-        frame = process_conn.get()
+        frame = q.get()
         images = splitImg(frame)
 
         if not images:
@@ -31,17 +31,21 @@ def main_process(process_conn):
             # 保存到本地数据库
             plate.saveInfo()
 
+def display(q):
+    pass
+
+
 if __name__ == '__main__':
-    db = Database("mongodb://localhost:27017/", "smartCanteen")
+    db = Database("mongodb://localhost:27017/", "SmartCanteen")
     cap = cv2.VideoCapture(0)
     baiduAPI = BaiduAPI()
     # image_access_token = baiduAPI.fetchToken(baiduAPI.IMAGE_API_KEY, baiduAPI.IMAGE_SECRET_KEY)
-    process_conn = Queue()
+    q = Queue()
     # 第二个进程，用于主程序运行
-    process2 = Process(target=main_process, args=(process_conn,))
-    process2.start()
+    recg_process = Process(target=recognize, args=(q,))
+    recg_process.start()
 
-    accord = 0
+    count = 0
     while True:
         ret, show = cap.read()
         if not ret:
@@ -49,11 +53,11 @@ if __name__ == '__main__':
             continue
 
         # 传递帧给main_process进程，这里取隔100帧发送一次
-        if accord == 100:
-            process_conn.put(show)
-            accord = 0
+        if count == 100:
+            q.put(show)
+            count = 0
         else:
-            accord += 1
+            count += 1
         # cv2.namedWindow('image', cv2.WINDOW_NORMAL)
         # cv2.reszieWindow('image', 680, 400)
         cv2.imshow('image', show)
@@ -62,6 +66,6 @@ if __name__ == '__main__':
             break
 
     # 等待进程2结束
-    process2.join()
+    recg_process.join()
     cap.release()
     cv2.destroyAllWindows()
