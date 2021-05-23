@@ -1,50 +1,46 @@
-import cv2
-import numpy as np
-import baiduAPI
 from baiduAPI import BaiduAPI
-from first.dish import Dish
 from first.user import User
-from first.plate1st import Plate1st
+from first.plate import Plate
 from database import Database
 from ImageHandle import *
+
 from multiprocessing import Process, Queue
 
-def recognize(q):
+
+def plateRecognize(q):
     while True:
         frame = q.get()
         images = splitImg(frame)
 
         if not images:
-            print("分割不成功")
             continue
 
         # 新的识别，添加一个判断是否为新用户，并创建一个user类
-        print("分割成功，创建新的用户......")
+        print("> plates detected")
         user = User()
         # 返回各分割图片识别结果
         for image in images:
-            # 创建dish类和plate1st类
-            dish = Dish()
-            plate = Plate1st(dish.sumInfo(), user.sumInfo())
+            plate = Plate()
             image_buffer = CVEncodeb64(image)
-            dish.RecognizeDish(baiduAPI, image_buffer)
+
+            id_found = plate.getID(image_buffer)
+            if not id_found:
+                break
+            if db.findPlate(plate.id):
+                print("> plate already recorded, skip")
+                continue
+            name_found = plate.getName(baiduAPI, image_buffer)
+            if not name_found:
+                break
+
+            plate.getWeight()
+            plate.getPrice()
+
             # 保存到本地数据库
             plate.saveInfo()
 
-def display(q):
-    pass
 
-
-if __name__ == '__main__':
-    db = Database("mongodb://localhost:27017/", "SmartCanteen")
-    cap = cv2.VideoCapture(0)
-    baiduAPI = BaiduAPI()
-    # image_access_token = baiduAPI.fetchToken(baiduAPI.IMAGE_API_KEY, baiduAPI.IMAGE_SECRET_KEY)
-    q = Queue()
-    # 第二个进程，用于主程序运行
-    recg_process = Process(target=recognize, args=(q,))
-    recg_process.start()
-
+def plateDisplay(q):
     count = 0
     while True:
         ret, show = cap.read()
@@ -65,7 +61,21 @@ if __name__ == '__main__':
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
+
+if __name__ == '__main__':
+    db = Database("mongodb://localhost:27017/", "SmartCanteen")
+    cap = cv2.VideoCapture(0)
+    baiduAPI = BaiduAPI()
+    plate_captures = Queue()
+    face_captures = Queue()
+    # 第二个进程，用于主程序运行
+    plate_show_process = Process(target=plateDisplay, args=(plate_captures,))
+    plate_recg_process = Process(target=plateRecognize, args=(plate_captures,))
+
+    plate_show_process.start()
+    plate_recg_process.start()
+
+
     # 等待进程2结束
-    recg_process.join()
     cap.release()
     cv2.destroyAllWindows()

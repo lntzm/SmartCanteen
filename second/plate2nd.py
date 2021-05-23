@@ -42,11 +42,6 @@ class Plate2nd:
 
     def saveInfo(self):
         """
-        保存数据到本地数据库
-        """
-
-    def sumInfo(self):
-        """
         将所有信息汇总成一个字典
         :return: 字典类型，所有成员变量
         """
