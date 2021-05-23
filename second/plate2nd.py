@@ -40,20 +40,13 @@ class Plate2nd:
         若未找到返回False
         """
 
-    def saveInfo(self):
-        """
-        保存数据到本地数据库
-        """
 
-    def sumInfo(self):
+    def saveInfo(self,db):
         """
         将所有信息汇总成一个字典
         :return: 字典类型，所有成员变量
         """
-        return {
-            "_id": self.id,
-            "eaten": self.eaten,
-            "rest_weight": self.rest_weight,
-            # 还可以继续添加一些信息，包括用餐时间等等
-        }
+        plate = {"_id": self.id, "eaten": self.eaten, "rest_weight": self.rest_weight}  # 还可以继续添加一些信息，包括用餐时间等等
+        db.addPlate(plate)
+
 

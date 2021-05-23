@@ -28,12 +28,8 @@ class Plate1st:
             print("> dish_id:", self.id)
         return True
 
-    def saveInfo(self):
-        """
-        保存数据到本地数据库
-        """
 
-    def sumInfo(self):
+    def saveInfo(self,db):
         """
         将所有信息汇总成一个字典
         :return: 字典类型，所有成员变量
@@ -44,4 +40,4 @@ class Plate1st:
         }
         plate.update(self.dish)
         plate.update(self.user)
-        return plate
+        db.addPlate(plate)

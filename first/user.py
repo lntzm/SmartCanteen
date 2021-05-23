@@ -22,13 +22,14 @@ class User:
         else:
             return None  # 没找到
 
-    def getBalance(self):
+    def getBalance(self, db):
         """
         查询数据库获取用户余额
         :param
         :return:
         """
-        pass
+        result = db.findUser(self.id)
+        self.balance = result['balance']
 
     def sumInfo(self):
         """

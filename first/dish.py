@@ -21,21 +21,24 @@ class Dish:
         return True
 
 
-    def getWeight(self):
+    def getWeight(self, db):
         """
         查询数据库获取菜品重量
         :param
         :return:
         """
-        pass
+        result = db.findDish(self.name)
+        self.weight = result['weight']
 
-    def getPrice(self):
+    def getPrice(self, db):
         """
         查询数据库获取菜品价格
         :param
         :return:
         """
-        pass
+        result = db.findDish(self.name)
+        self.price = result['price']
+
 
     def sumInfo(self) -> dict:
         """
