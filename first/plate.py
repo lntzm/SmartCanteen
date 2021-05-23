@@ -30,10 +30,8 @@ class Plate:
         # 识别结果和位置
         self.id, points = detector.detectAndDecode(image)
         if not self.id:
-            print("> fail to recognize plate id")
             return False
         else:
-            print("> plate id:", self.id)
             return True
 
     def getName(self, baiduAPI, image_buffer) -> bool:
@@ -44,10 +42,8 @@ class Plate:
         """
         self.name, prob, self.calories = baiduAPI.getDishResult(image_buffer)
         if not self.name or prob < 0.6:
-            print("> fail to recognize dishes")
             return False
 
-        print("> name:{}, calories:{}".format(self.name, self.calories))
         return True
 
     def getWeight(self):

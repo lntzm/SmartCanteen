@@ -18,9 +18,10 @@ class User:
         # 进行人脸搜索
         search_result = self.__faceRCN.face_search(img_rgb, group_id)
         if search_result is not None:  # 如果找到的话 返回用户id
-            return search_result['user_id']
+            self.id = search_result['user_id']
+            return True
         else:
-            return None  # 没找到
+            return False  # 没找到
 
     def getBalance(self):
         """
