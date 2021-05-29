@@ -3,6 +3,7 @@ from baiduAPI import BaiduAPI
 from first.plate import Plate
 from database import Database
 from ImageHandle import *
+# import time
 
 from multiprocessing import Process, Queue, Pipe
 
@@ -10,12 +11,17 @@ from multiprocessing import Process, Queue, Pipe
 def plateRecognize(q: Queue, pipe: Pipe()):
     while True:
         frame = q.get()
-        images = splitImg(frame)
+
+        # time_start = time.time()
+        images, img_marked = splitImg(frame, True)
+        # time_end = time.time()
+        # print('分割图片用时', time_end - time_start, 's')
 
         if not images:
             print("> plates not detected")
             continue
-
+        cv2.imwrite("img_marked.jpg", img_marked)
+        print("分割到", len(images), "个区域")
         print("> plates detected")
         id_found = False
         name_found = False
@@ -23,23 +29,28 @@ def plateRecognize(q: Queue, pipe: Pipe()):
         for image in images:
             plate = Plate()
             image_buffer = CVEncodeb64(image)
-
+            # time_start = time.time()
             print("> start getting IDs")
-            id_found = plate.getID(image)
+            id_found = plate.getID(baiduAPI, image_buffer)
             if not id_found:
                 print("  > fail to recognize plate id")
                 break
             print("  > plate id:", plate.id)
-            if db.findPlate(plate.id):
-                print("> plate already recorded, skip")
-                continue
+            # time_end = time.time()
+            # print('ID识别用时', time_end - time_start, 's')
+            # if db.findPlate(plate.id):
+            #     print("> plate already recorded, skip")
+            #     continue
 
+            # time_start = time.time()
             print("> start getting dish name")
             name_found = plate.getName(baiduAPI, image_buffer)
             if not name_found:
                 print("> fail to recognize dishes")
                 break
             print("> name:{}, calories:{}".format(plate.name, plate.calories))
+            # time_end = time.time()
+            # print('菜品识别用时', time_end - time_start, 's')
 
             plate.getWeight()
             plate.getPrice()
@@ -62,7 +73,7 @@ def plateDisplay(q):
             print('No camera')
             continue
 
-        # 传递帧给main_process进程，这里取隔100帧发送一次
+        # 传递帧给main_process进程，这里取隔100帧发送一次zWASX
         if count == 100:
             q.put(show)
             count = 0
@@ -87,11 +98,13 @@ def userRecognize(q: Queue, pipe: Pipe()):
 def userDisplay(q):
     pass
 
-
+cap = cv2.VideoCapture(0)
+baiduAPI = BaiduAPI()
+# cap.Set(gocv.VideoCaptureAutoExposure,0.25)
 if __name__ == '__main__':
     db = Database("mongodb://localhost:27017/", "SmartCanteen")
-    cap = cv2.VideoCapture("./2021-05-18 16-36-43.mkv")
-    baiduAPI = BaiduAPI()
+
+
     plate_captures = Queue()
     face_captures = Queue()
     enable_send, enable_recv = Pipe()
