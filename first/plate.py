@@ -1,10 +1,12 @@
 import cv2
 
+
 class Plate:
     def __init__(self, user: dict = None):
         self.id = 0  # 盘子ID
         self.eaten = False  # 第一次，没有吃过
         self.name = ""  # 菜品名
+        self.__db_info = {}
         self.calories = 0  # 菜品卡路里
         self.weight = 0  # 菜品重量
         self.price = 0  # 菜品价格
@@ -34,8 +36,6 @@ class Plate:
         else:
             return True
 
-
-
     def getName(self, baiduAPI, image_buffer) -> bool:
         """
         菜品识别获取菜品名与卡路里
@@ -48,13 +48,16 @@ class Plate:
 
         return True
 
+    def searchDB(self, db):
+        self.__db_info = db.findDish(self.name)
+
     def getWeight(self):
         """
         查询数据库获取菜品重量
         :param
         :return:
         """
-        pass
+        self.weight = self.__db_info['weight']
 
     def getPrice(self):
         """
@@ -62,13 +65,12 @@ class Plate:
         :param
         :return:
         """
-        pass
+        self.price = self.__db_info['price']
 
     def matchUser(self, user: dict):
         self.user = user
 
-
-    def saveInfo(self):
+    def saveInfo(self, db):
         """
         将所有信息汇总成一个字典
         :return: 字典类型，所有成员变量
@@ -82,4 +84,4 @@ class Plate:
             "price": self.price
         }
         plate.update(self.user)
-
+        db.addPlate(plate)

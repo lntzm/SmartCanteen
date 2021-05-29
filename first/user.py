@@ -6,6 +6,7 @@ class User:
     def __init__(self):
         self.id = 0  # 用户ID
         self.balance = 0  # 余额
+        self.__db_info = {}
         self.__faceRCN = FaceRCN()  # 人脸识别api
 
     def getID(self, img_rgb, group_id="test"):
@@ -23,14 +24,16 @@ class User:
         else:
             return False  # 没找到
 
-    def getBalance(self, db):
+    def searchDB(self, db):
+        self.__db_info = db.findUser(self.id)
+
+    def getBalance(self):
         """
         查询数据库获取用户余额
         :param
         :return:
         """
-        result = db.findUser(self.id)
-        self.balance = result['balance']
+        self.balance = self.__db_info['balance']
 
     def sumInfo(self):
         """
@@ -48,7 +51,7 @@ if __name__ == '__main__':
     # 测试getID
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
-    while (cap.isOpened()):
+    while cap.isOpened():
         ret, frame = cap.read()
 
         cv2.imshow('frame', frame)
