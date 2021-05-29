@@ -2,9 +2,10 @@ import cv2
 import numpy as np
 from aip import AipFace
 
-from ImageHandle import CVEncodeb64
+# from ImageHandle import CVEncodeb64
 from first.Face_RCN.utils.face_utils import *
 from first.Face_RCN.utils.params_settings import *
+from first.Face_RCN.utils.to_base64 import *
 
 # 百度云API参数
 APP_ID = '23931013'
@@ -108,7 +109,8 @@ class FaceRCN:
     """
     def face_search(self, img_rgb, group_id):     
 
-        img64 = CVEncodeb64(img_rgb)
+        # img64 = CVEncodeb64(img_rgb)
+        img64 = to_base64(img_rgb)
         # 调API在人脸库进行搜索
         face_result =  self.client.search(img64, image_type, group_id)
 

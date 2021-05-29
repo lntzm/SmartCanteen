@@ -1,5 +1,7 @@
+import cv2
+
 from baiduAPI import BaiduAPI
-# from first.user import User
+from first.user import User
 from first.plate import Plate
 from database import Database
 from ImageHandle import *
@@ -68,7 +70,7 @@ def plateRecognize(q: Queue, pipe: Pipe()):
 def plateDisplay(q):
     count = 0
     while True:
-        ret, show = cap.read()
+        ret, show = plate_cap.read()
         if not ret:
             print('No camera')
             continue
@@ -91,20 +93,43 @@ def userRecognize(q: Queue, pipe: Pipe()):
     while True:
         if not pipe.recv():
             continue
+        frame = q.get()
 
+        user = User()
+        found = user.getID(frame)
+        if not found:
+            print("> user not found")
+            continue
+
+        # 写入数据库
         pass
 
 
 def userDisplay(q):
-    pass
+    count = 0
+    while face_cap.isOpened():
+        ret, show = face_cap.read()
+        if not ret:
+            print('No camera')
+            continue
 
-cap = cv2.VideoCapture(0)
-baiduAPI = BaiduAPI()
-# cap.Set(gocv.VideoCaptureAutoExposure,0.25)
+        # 传递帧给main_process进程，这里取隔100帧发送一次
+        if count == 20:
+            q.put(show)
+            count = 0
+        else:
+            count += 1
+        cv2.imshow('face_detect', show)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+
 if __name__ == '__main__':
     db = Database("mongodb://localhost:27017/", "SmartCanteen")
-
-
+    plate_cap = cv2.VideoCapture(1)
+    face_cap = cv2.VideoCapture(0)
+    baiduAPI = BaiduAPI()
     plate_captures = Queue()
     face_captures = Queue()
     enable_send, enable_recv = Pipe()
@@ -125,5 +150,6 @@ if __name__ == '__main__':
     user_disp_process.join()
     user_recg_process.terminate()
 
-    cap.release()
+    plate_cap.release()
+    face_cap.release()
     cv2.destroyAllWindows()
