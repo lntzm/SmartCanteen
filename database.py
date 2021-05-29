@@ -64,39 +64,27 @@ class Database:
         """
         return result
 
-    def updateDish(self, name: str, key: str, new: str):
-        condition = {'name': name}
-        item = self.dishes_db.find_one(condition)
-        item[key] = new
-        self.dishes_db.update(condition, item)
-
-        """
-        只更新一条
-        根据dish_name查找菜品的相关信息,并且修改该条菜品的信息，其中name变量是菜品的名字，key变量为键的名字，new变量为对应的更新的键的值
-        :return: item: 字典类型，返回这道菜的所有信息
-        """
-        return item
-
-    def updateUser(self, name: str, key: str, new: int):
+    def updateDish(self, name: str, change:dict):
         condition = {'user_id': name}
-        item = self.users_db.find_one(condition)
-        item[key] = new
-        self.dishes_db.update(condition, item)
+        self.dishes_db.update_one(condition, {'$set': change})
+
         """
         只更新一条
-        根据user_id查找用户的相关信息,并且修改该条用户的信息，其中name变量是用户的id，key变量为键的名字，new变量为对应的更新的键的值
-        :return: item: 字典类型，返回这个用户的所有信息
         """
-        return item
 
-    def updatePlate(self, name: str, key: str, new: int):
-        condition = {'name': name}
-        item = self.dishes_db.find_one(condition)
-        item['name'] = new
-        self.dishes_db.update(condition, item)
+    def updateUser(self, name: str, change: dict):
+        condition = {'user_id': name}
+        self.users_db.update_one(condition, {'$set': change})
+
+        """
+        只更新一条
+        """
+
+    def updatePlate(self, name: str, change: dict):
+        condition = {'user_id': name}
+        self.dishes_db.update_one(condition, {'$set': change})
         """
         只更新一条
         根据name查找盘子的相关信息,并且修改该盘子的信息，其中name变量是菜品的名字，key变量为键的名字，new变量为对应的更新的键的值
         :return: item: 字典类型，返回这个盘子的所有信息
         """
-        return item
