@@ -56,8 +56,8 @@ if __name__ == '__main__':
     GPIO.setmode(GPIO.BCM)
     # 类的定义
     hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=31099, ratio=428.544)
-    hx2 = HX711(dout_pin=21, pd_sck_pin=20, offset=31099, ratio=428.544)
-    hx3 = HX711(dout_pin=21, pd_sck_pin=20, offset=31099, ratio=428.544)
+    hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=31099, ratio=428.544)
+    hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=31099, ratio=428.544)
 
     try:
         pass
