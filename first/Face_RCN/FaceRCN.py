@@ -1,10 +1,9 @@
 import cv2
 import numpy as np
+
 from aip import AipFace
 
-from ImageHandle import CVEncodeb64
-from first.Face_RCN.utils.face_utils import *
-from first.Face_RCN.utils.params_settings import *
+from .face_utils import *
 
 # 百度云API参数
 APP_ID = '23931013'
@@ -17,7 +16,7 @@ python-sdk tutorial
 https://ai.baidu.com/ai-doc/FACE/ek37c1qiz#%E5%AE%89%E8%A3%85%E4%BA%BA%E8%84%B8%E8%AF%86%E5%88%AB-python-sdk
 """
 
-class FaceRCN:
+class FaceRCN():
 
     def __init__(self):
         # 建立一个人脸API的对象
@@ -27,12 +26,15 @@ class FaceRCN:
     人脸检测
     *检测图片中的人脸 并返回人脸信息*
 
-    img_rgb: RGB格式图片(numpy array)
-    face_field: 人脸检测选项  beauty(颜值)  quality(人脸质量)
+    --input:
+        img_rgb: RGB格式图片(numpy array)
+        face_field: 人脸检测选项  beauty(颜值)  quality(人脸质量)
+    --output:
+        返回带有人脸信息的字典
     """
     def face_detect(self, img_rgb, face_field="beauty,quality"):
 
-        img64 = CVEncodeb64(img_rgb)
+        img64 = to_base64(img_rgb)
         det_options["face_field"] = face_field
         face_result = self.client.detect(img64, image_type, det_options)
 
@@ -45,11 +47,15 @@ class FaceRCN:
     人脸注册
     *对符合要求的人脸 注册到人脸库*
 
-    img_rgb: RGB格式图片(numpy array)
-    group_id: 人脸库分组
-    user_id: 人脸库中用户id
-    user_info: 用户备注
-    mode: 注册模式为附加
+    --input:
+        img_rgb: RGB格式图片(numpy array)
+        group_id: 人脸库分组
+        user_id: 人脸库中用户id
+        user_info: 用户备注
+        mode: 注册模式为附加
+    --output；
+        注册成功： 返回人脸信息
+        注册失败（人脸不合格）： 返回人脸质量不合格的项目列表
     """
     # 人脸注册
     def face_register(self,
@@ -103,12 +109,15 @@ class FaceRCN:
     人脸搜索
     *在人脸库中找到输入的人脸 并返回用户信息*
 
-    img_rgb: RGB格式图片(numpy array)
-    group_id: 人脸库分组
+    --input:
+        img_rgb: RGB格式图片(numpy array)
+        group_id: 人脸库分组
+    --output:
+        人脸搜索结果的字典 包括了用户id的key
     """
     def face_search(self, img_rgb, group_id):     
 
-        img64 = CVEncodeb64(img_rgb)
+        img64 = to_base64(img_rgb)
         # 调API在人脸库进行搜索
         face_result =  self.client.search(img64, image_type, group_id)
 

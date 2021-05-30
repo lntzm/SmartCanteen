@@ -11,8 +11,10 @@ class User:
     def getID(self, img_rgb, group_id="test"):
         """
         人脸识别获取用户ID
-        :param 1.RGB图片(numpy array类型) img_rgb
-        :return: string类型 用户id
+        :param 
+            1. RGB图片img_rgb <numpy array> 
+            2. 人脸库分组 default="test" <string>
+        :return: 用户id <string> 
         """
 
         # 进行人脸搜索
@@ -45,11 +47,13 @@ if __name__ == '__main__':
 
     # 测试getID
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    frame = [None]
 
     while (cap.isOpened()):
-        ret, frame = cap.read()
+        ret, f = cap.read()
 
-        cv2.imshow('frame', frame)
+        frame[0] = f
+        cv2.imshow('frame', f)
         if cv2.waitKey(5) & 0xFF == 27:
             break
 
@@ -57,4 +61,4 @@ if __name__ == '__main__':
     cv2.destroyAllWindows()
 
     user = User()
-    # print(user.getID(frame))  # 打印搜索到的用户id
+    print(user.getID(frame[0]))  # 打印搜索到的用户id

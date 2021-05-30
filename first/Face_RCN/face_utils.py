@@ -1,6 +1,42 @@
 import cv2
 import numpy as np
-from ImageHandle import CVEncodeb64
+import base64
+
+"""
+#################################################
+人脸API调用的相关参数设置
+"""
+
+"""人脸检测部分"""
+det_options = {}
+det_options["face_field"] = "beauty,quality"    # 返回颜值 人脸质量
+det_options["max_face_num"] = 1                 # 人脸检测数
+det_options["face_type"] = "LIVE"               # 相机拍摄风格
+det_options["liveness_control"] = "LOW"         # 活体检测
+
+"""人脸注册部分"""
+register_options = {}
+register_options["user_info"] = "user's info"       # 用户信息  
+register_options["quality_control"] = "NORMAL"      # 人脸质量控制
+register_options["liveness_control"] = "LOW"        # 活体检测
+register_options["action_type"] = "APPEND"          # 已注册 则在该用户尾部追加新的人脸
+
+"""人脸搜索部分"""
+search_options = {}
+
+"""
+#################################################
+人脸搜索相关函数
+"""
+
+"""
+图片转base64类型模块
+*转换为base64类型 才能上传到百度云API*
+"""
+def to_base64(img):
+    ret, buf = cv2.imencode(".jpg", img)   # numpy图片转二进制
+    img64 = base64.b64encode(buf)
+    return str(img64, "utf-8")
 
 """人脸质量判断"""
 def judge_face(face_list, detailed=False):
