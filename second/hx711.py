@@ -133,8 +133,8 @@ class HX711:
             # check if the hx 711 did not turn off...
             if end_counter - start_counter >= 0.00006:
                 # if pd_sck pin is HIGH for 60 us and more than the HX 711 enters power down mode.
-                print('Not enough fast while reading data')
-                print('Time elapsed: {}'.format(end_counter - start_counter))
+                # print('Not enough fast while reading data')
+                # print('Time elapsed: {}'.format(end_counter - start_counter))
                 return False
             # Shift the bits as they come to data_in variable.
             # Left shift by one bit then bitwise OR with the new bit.
