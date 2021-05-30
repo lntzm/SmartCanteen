@@ -1,7 +1,8 @@
-from second.plate2nd import Plate2nd
+from plate2nd import Plate2nd
 from database import Database
 from ImageHandle import *
-from second.hx711 import HX711
+from hx711 import HX711
+from baiduAPI import BaiduAPI
 
 import RPi.GPIO as GPIO
 import time
@@ -14,18 +15,25 @@ def main_process(q):
         images, locs = splitImg(frame)
 
         if not images:
-            print("分割不成功")
+            print("> plates not detected")
             continue
-        if not hx1.get_weight_mean():
-            print("分割区域未检测到重量")
-            continue
+        print("分割到", len(images), "个区域")
+
         weights = []
-        if hx1.get_weight_mean():
-            weights.append(hx1.get_weight_mean)
-        if hx2.get_weight_mean():
-            weights.append(hx2.get_weight_mean)
-        if hx3.get_weight_mean():
-            weights.append(hx3.get_weight_mean)
+        hx1_weight = hx1.get_weight_mean(5)
+        hx2_weight = hx2.get_weight_mean(5)
+        hx3_weight = hx3.get_weight_mean(5)
+        if hx1_weight:
+            weights.append(hx1_weight)
+            print("检测到1号盘子，重量为：", hx1_weight)
+
+        if hx2_weight:
+            weights.append(hx2_weight)
+            print("检测到2号盘子，重量为：", hx2_weight)
+
+        if hx3_weight:
+            weights.append(hx3_weight)
+            print("检测到3号盘子，重量为：", hx3_weight)
 
         # 根据分割区域将重量与盘子对应
         num_conflict, weights = synchronize(locs, weights)
@@ -35,11 +43,12 @@ def main_process(q):
 
         # 二次识别
         # 返回各分割图片识别结果
-        for image, weight in images, weights:
+        for image, weight in zip(images, weights):
             # 创建dish类和plate1st类
             plate = Plate2nd()
             # 是否找到该盘子记录
-            if not plate.getID(image):
+            image_buffer = CVEncodeb64(image)
+            if not plate.getID(baiduAPI, image_buffer):
                 continue
 
             if not plate.getInfoBefore():
@@ -52,20 +61,22 @@ def main_process(q):
 
         # time.sleep(1)
 
+
 if __name__ == '__main__':
     GPIO.setmode(GPIO.BCM)
     # 类的定义
-    hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=31099, ratio=428.544)
-    hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=31099, ratio=428.544)
-    hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=31099, ratio=428.544)
+    hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=68753, ratio=433.21)
+    hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=-1660, ratio=430.05)
+    hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=177856, ratio=424.71)
 
-    try:
-        pass
+    # try:
+    #     pass
 
-    finally:
-        GPIO.cleanup()
+    # finally:
+    #     GPIO.cleanup()
 
     db = Database("mongodb://localhost:27017/", "smartCanteen")
+    baiduAPI = BaiduAPI()
     cap = cv2.VideoCapture(0)
     # image_access_token = baiduAPI.fetchToken(baiduAPI.IMAGE_API_KEY, baiduAPI.IMAGE_SECRET_KEY)
     q = Queue()
