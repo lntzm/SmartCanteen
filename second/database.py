@@ -65,6 +65,7 @@ class Database:
         """
         return result
 
+
     def updateDish(self, name: str, change: dict):
         condition = {'_id': name}
         self.dishes_db.update_one(condition, {'$set': change})
@@ -80,9 +81,6 @@ class Database:
     def addRecord(self, plate: dict):
         self.record.insert_one(plate)
 
-    def findRecord(self, plate_id: int):
-        return self.plates_db.find_one({'_id': plate_id})
-
     def getRecord(self):
         return self.record.find()
 
@@ -96,7 +94,8 @@ class Database:
         pass
 
     def cleanRecord(self):
-        self.record.delete_many({})
+        self.record.delete_many()
+
 
 
 if __name__ == '__main__':

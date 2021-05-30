@@ -1,22 +1,22 @@
 import cv2
+from datetime import datetime
+
 class Plate2nd:
     def __init__(self):
-        self.id = 0             # 盘子ID
-        self.eaten = True       # 第二次，已经吃过
-        self.rest_weight = 0    # 剩余重量
+        self.id = 0  # 盘子ID
+        self.eaten = True  # 第二次，已经吃过
+        self.rest_weight = 0  # 剩余重量
+        self.time2nd = ""  # 二次记录时间
+        self.meal_time = 0  # 用餐时长
 
-    def getID(self, image):
+    def getID(self, baiduAPI, image_buffer):
         """
         二维码识别获取盘子ID
         :param baiduAI: BaiduAPI类的一个对象，提供识别接口
         :param image: 输入图片
         :return 是否成功获取盘子ID
         """
-        detector = cv2.wechat_qrcode_WeChatQRCode("./detect.prototxt", "./detect.caffemodel", "./sr.prototxt",
-                                                  "./sr.caffemodel")
-        # 识别结果和位置
-        res, points = detector.detectAndDecode(image)
-        self.id = res
+        self.id = baiduAPI.getNumberResult(image_buffer)
         if not self.id:
             print("> dish_id not found")
             return False
@@ -33,27 +33,22 @@ class Plate2nd:
         self.rest_weight = hx711.get_weight_mean(5)
         pass
 
-    def getInfoBefore(self) -> bool:
-        """
-        查询数据库获取就餐取菜对应盘子信息
-        :return:
-        若未找到返回False
-        """
+    # def searchDB(self, db):
+    #     self.__db_info = db.findPlate(self.id)
 
-    def saveInfo(self):
-        """
-        保存数据到本地数据库
-        """
+    def updateTime(self, time1st):
+        self.time2nd = datetime.now().strftime('%Y-%m-%d %H:%M')
+        self.meal_time = time1st - self.time2nd
 
-    def sumInfo(self):
+    def updateInfo(self, db):
         """
         将所有信息汇总成一个字典
         :return: 字典类型，所有成员变量
         """
-        return {
-            "_id": self.id,
+        plate = {
             "eaten": self.eaten,
             "rest_weight": self.rest_weight,
-            # 还可以继续添加一些信息，包括用餐时间等等
+            "time2nd": self.time2nd,
+            "meal_time": self.meal_time
         }
-
+        db.addRecord(plate)
