@@ -80,11 +80,14 @@ class Database:
     def addRecord(self, plate: dict):
         self.record.insert_one(plate)
 
+    def findRecord(self, plate_id: int):
+        return self.plates_db.find_one({'_id': plate_id})
+
     def getRecord(self):
         return self.record.find()
 
     def mergeUserRecord(self, user: dict):
-        self.dishes_db.update_many({}, {'$set': user})
+        self.plates_db.update_many({}, {'$set': user})
 
     def commitRecord(self):
         self.plates_db.insert(self.record.find())
@@ -93,7 +96,7 @@ class Database:
         pass
 
     def cleanRecord(self):
-        self.record.delete_many()
+        self.record.delete_many({})
 
 
 if __name__ == '__main__':

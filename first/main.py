@@ -9,13 +9,15 @@ from ImageHandle import *
 
 from multiprocessing import Process
 from multiprocessing import Queue
-from multiprocessing import Manager
 
 
-def plateRecognize(q: Queue, ns):
+def plateRecognize(q: Queue, control: Queue):
     while True:
         frame = q.get()
-        if not ns.enable_plate_recg:
+        if not control.get()[0]:
+            if control.empty():
+                control.put((False, True))  # 把取出来的再还回去
+            print("plate: False")
             continue
         # time_start = time.time()
         images, img_marked = splitImg(frame, True)
@@ -24,6 +26,8 @@ def plateRecognize(q: Queue, ns):
 
         if not images:
             print("> plates not detected")
+            if control.empty():
+                control.put((False, True))  # 把取出来的再还回去
             continue
         cv2.imwrite("img_marked.jpg", img_marked)
         print("分割到", len(images), "个区域")
@@ -43,7 +47,7 @@ def plateRecognize(q: Queue, ns):
             print("  > plate id:", plate.id)
             # time_end = time.time()
             # print('ID识别用时', time_end - time_start, 's')
-            if db.findPlate(plate.id):
+            if db.findPlate(plate.id) or db.findRecord(plate.id):
                 print("> plate already recorded, skip")
                 continue
 
@@ -62,12 +66,13 @@ def plateRecognize(q: Queue, ns):
             plate.saveInfo(db)
 
         if (not id_found) or (not name_found):
+            if control.empty():
+                control.put((False, True))  # 把取出来的再还回去
             continue
 
         # for循环中所有图片的id和name都识别到了
         # 发送给人脸识别进程True，可以开始人脸识别
-        ns.enable_plate_recg = False
-        ns.enable_face_recg = True
+        control.put((False, True))
 
 
 def plateDisplay(q):
@@ -92,15 +97,19 @@ def plateDisplay(q):
             break
 
 
-def userRecognize(q: Queue, ns):
+def userRecognize(q: Queue, control: Queue):
     while True:
         frame = q.get()
-        if ns.enable_face_recg:
+        if not control.get()[1]:
+            control.put((True, False))  # 把取出来的再还回去
+            print("user: False")
             continue
 
         user = User()
         found = user.getID(frame)
         if not found:
+            if control.empty():
+                control.put((True, False))  # 把取出来的再还回去
             print("> user not found")
             continue
 
@@ -111,8 +120,8 @@ def userRecognize(q: Queue, ns):
         db.commitRecord()
         db.pushRecord()
         db.cleanRecord()
-        ns.enable_plate_recg = True
-        ns.enable_face_recg = False
+
+        control.put((True, False))
 
 
 def userDisplay(q):
@@ -137,19 +146,18 @@ def userDisplay(q):
 
 if __name__ == '__main__':
     db = Database("mongodb://localhost:27017/", "SmartCanteen")
-    plate_cap = cv2.VideoCapture(1)
+    plate_cap = cv2.VideoCapture(2)
     face_cap = cv2.VideoCapture(0)
     baiduAPI = BaiduAPI()
     plate_captures = Queue()
     face_captures = Queue()
-    ns = Manager().Namespace()
-    ns.enable_plate_recg = True
-    ns.enable_face_recg = False
+    control = Queue(1)
+    control.put((True, False))
 
     plate_disp_process = Process(target=plateDisplay, args=(plate_captures,))
-    plate_recg_process = Process(target=plateRecognize, args=(plate_captures, ns))
+    plate_recg_process = Process(target=plateRecognize, args=(plate_captures, control))
     user_disp_process = Process(target=userDisplay, args=(face_captures,))
-    user_recg_process = Process(target=userRecognize, args=(face_captures, ns))
+    user_recg_process = Process(target=userRecognize, args=(face_captures, control))
 
     plate_disp_process.start()
     plate_recg_process.start()
