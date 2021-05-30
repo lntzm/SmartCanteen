@@ -1,17 +1,22 @@
+import cv2
+
 from baiduAPI import BaiduAPI
-# from first.user import User
+from first.user import User
 from first.plate import Plate
 from database import Database
 from ImageHandle import *
 # import time
 
-from multiprocessing import Process, Queue, Pipe
+from multiprocessing import Process
+from multiprocessing import Queue
+from multiprocessing import Manager
 
 
-def plateRecognize(q: Queue, pipe: Pipe()):
+def plateRecognize(q: Queue, ns):
     while True:
         frame = q.get()
-
+        if not ns.enable_plate_recg:
+            continue
         # time_start = time.time()
         images, img_marked = splitImg(frame, True)
         # time_end = time.time()
@@ -38,9 +43,9 @@ def plateRecognize(q: Queue, pipe: Pipe()):
             print("  > plate id:", plate.id)
             # time_end = time.time()
             # print('ID识别用时', time_end - time_start, 's')
-            # if db.findPlate(plate.id):
-            #     print("> plate already recorded, skip")
-            #     continue
+            if db.findPlate(plate.id):
+                print("> plate already recorded, skip")
+                continue
 
             # time_start = time.time()
             print("> start getting dish name")
@@ -48,27 +53,27 @@ def plateRecognize(q: Queue, pipe: Pipe()):
             if not name_found:
                 print("> fail to recognize dishes")
                 break
-            print("> name:{}, calories:{}".format(plate.name, plate.calories))
+            print("> name:{}".format(plate.name))
             # time_end = time.time()
             # print('菜品识别用时', time_end - time_start, 's')
 
-            plate.getWeight()
-            plate.getPrice()
-
+            plate.searchDB(db)
             # 保存到本地数据库
-            plate.saveInfo()
+            plate.saveInfo(db)
 
         if (not id_found) or (not name_found):
             continue
 
+        # for循环中所有图片的id和name都识别到了
         # 发送给人脸识别进程True，可以开始人脸识别
-        pipe.send(True)
+        ns.enable_plate_recg = False
+        ns.enable_face_recg = True
 
 
 def plateDisplay(q):
     count = 0
     while True:
-        ret, show = cap.read()
+        ret, show = plate_cap.read()
         if not ret:
             print('No camera')
             continue
@@ -87,32 +92,64 @@ def plateDisplay(q):
             break
 
 
-def userRecognize(q: Queue, pipe: Pipe()):
+def userRecognize(q: Queue, ns):
     while True:
-        if not pipe.recv():
+        frame = q.get()
+        if ns.enable_face_recg:
             continue
 
-        pass
+        user = User()
+        found = user.getID(frame)
+        if not found:
+            print("> user not found")
+            continue
+
+        # 写入数据库
+        user.saveInfo(db)
+        user.pay(db)
+
+        db.commitRecord()
+        db.pushRecord()
+        db.cleanRecord()
+        ns.enable_plate_recg = True
+        ns.enable_face_recg = False
 
 
 def userDisplay(q):
-    pass
+    count = 0
+    while face_cap.isOpened():
+        ret, show = face_cap.read()
+        if not ret:
+            print('No camera')
+            continue
 
-cap = cv2.VideoCapture(0)
-baiduAPI = BaiduAPI()
-# cap.Set(gocv.VideoCaptureAutoExposure,0.25)
+        # 传递帧给main_process进程，这里取隔100帧发送一次
+        if count == 20:
+            q.put(show)
+            count = 0
+        else:
+            count += 1
+        cv2.imshow('face_detect', show)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+
 if __name__ == '__main__':
     db = Database("mongodb://localhost:27017/", "SmartCanteen")
-
-
+    plate_cap = cv2.VideoCapture(1)
+    face_cap = cv2.VideoCapture(0)
+    baiduAPI = BaiduAPI()
     plate_captures = Queue()
     face_captures = Queue()
-    enable_send, enable_recv = Pipe()
+    ns = Manager().Namespace()
+    ns.enable_plate_recg = True
+    ns.enable_face_recg = False
 
     plate_disp_process = Process(target=plateDisplay, args=(plate_captures,))
-    plate_recg_process = Process(target=plateRecognize, args=(plate_captures, enable_send))
+    plate_recg_process = Process(target=plateRecognize, args=(plate_captures, ns))
     user_disp_process = Process(target=userDisplay, args=(face_captures,))
-    user_recg_process = Process(target=userRecognize, args=(face_captures, enable_recv))
+    user_recg_process = Process(target=userRecognize, args=(face_captures, ns))
 
     plate_disp_process.start()
     plate_recg_process.start()
@@ -125,5 +162,6 @@ if __name__ == '__main__':
     user_disp_process.join()
     user_recg_process.terminate()
 
-    cap.release()
+    plate_cap.release()
+    face_cap.release()
     cv2.destroyAllWindows()

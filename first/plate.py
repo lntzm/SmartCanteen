@@ -1,20 +1,12 @@
-import cv2
+from datetime import datetime
+
 
 class Plate:
-    def __init__(self, user: dict = None):
+    def __init__(self):
         self.id = 0  # 盘子ID
         self.eaten = False  # 第一次，没有吃过
         self.name = ""  # 菜品名
-        self.calories = 0  # 菜品卡路里
-        self.weight = 0  # 菜品重量
-        self.price = 0  # 菜品价格
-
-        if user is None:
-            self.user = {}
-        else:
-            self.user = user  # 用户信息
-            # 重命名user中的键id
-            self.user["user_id"] = self.user.pop("_id")
+        self.__db_info = {}
 
     def getID(self, baiduAPI, image_buffer) -> bool:
         """
@@ -34,41 +26,22 @@ class Plate:
         else:
             return True
 
-
-
     def getName(self, baiduAPI, image_buffer) -> bool:
         """
         菜品识别获取菜品名与卡路里
         :param baiduAI: BaiduAPI类的一个对象，提供识别接口
         :param image: 输入图片
         """
-        self.name, prob, self.calories = baiduAPI.getDishResult(image_buffer)
+        self.name, prob, _ = baiduAPI.getDishResult(image_buffer)
         if not self.name or float(prob) < 0.6:
             return False
 
         return True
 
-    def getWeight(self):
-        """
-        查询数据库获取菜品重量
-        :param
-        :return:
-        """
-        pass
+    def searchDB(self, db):
+        self.__db_info = db.findDish(self.name)
 
-    def getPrice(self):
-        """
-        查询数据库获取菜品价格
-        :param
-        :return:
-        """
-        pass
-
-    def matchUser(self, user: dict):
-        self.user = user
-
-
-    def saveInfo(self):
+    def saveInfo(self, db):
         """
         将所有信息汇总成一个字典
         :return: 字典类型，所有成员变量
@@ -77,9 +50,12 @@ class Plate:
             "_id": self.id,
             "eaten": self.eaten,
             "dish_name": self.name,
-            "calories": self.calories,
-            "weight": self.weight,
-            "price": self.price
+            "calories": self.__db_info['calories'],
+            "fat": self.__db_info['fat'],
+            "carbo": self.__db_info['carbo'],
+            "protein": self.__db_info['protein'],
+            "weight": self.__db_info['weight'],
+            "price": self.__db_info['price'],
+            "time": datetime.now().strftime('%Y-%m-%d %H:%M')
         }
-        plate.update(self.user)
-
+        db.addRecord(plate)
