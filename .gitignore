@@ -5,3 +5,6 @@ __pycache__
 *.mkv
 *.jpg
 *.png
+dish/data/
+dish/bak/
+dish/model/checkpoint/
