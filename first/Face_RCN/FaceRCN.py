@@ -122,11 +122,9 @@ class FaceRCN():
         face_result =  self.client.search(img64, image_type, group_id)
 
         if face_result["error_msg"] == "SUCCESS":
-            print("User found!")
             return face_result["result"]["user_list"][0]
         else:
             # 没有这个用户 建议赶紧注册！(o°ω°o)
-            print("User not found!")
             return None
 
 

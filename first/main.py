@@ -1,182 +1,188 @@
+import sys
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from Ui_Main_window import Ui_MainWindow
+from multiprocessing import Queue as ProcQueue
+
+#from database import Database
+from user import User
+from Face_search_proc import Face_search
+
+import time
+import numpy as np
 import cv2
 
-from baiduAPI import BaiduAPI
-from first.user import User
-from first.plate import Plate
-from database import Database
-from ImageHandle import *
-# import time
+class Main_app(QMainWindow, Ui_MainWindow):
 
-from multiprocessing import Process
-from multiprocessing import Queue
+    def __init__(self):
+        super().__init__()
+        self.user_flag_queue = ProcQueue(1)        # 人脸识别成功标志
+        self.dish_flag_queue = ProcQueue(1)        # 菜品识别完毕标志
+        self.over_flag_queue = ProcQueue(1)        # 用户结算完毕标志
+        self.face_disp_timer = QTimer()            # 人脸显示 定时器
+        self.user = User()
 
+        self.set_ui()           # 初始化窗口UI
+        self.db = Database("mongodb://localhost:27017/", "SmartCanteen")    # 初始化数据库
+        self.init_face()        # 初始化人脸（进程 + 线程）
 
-def plateRecognize(q: Queue, control: Queue):
-    while True:
-        frame = q.get()
-        if not control.get()[0]:
-            if control.empty():
-                control.put((False, True))  # 把取出来的再还回去
-            print("[debug] plate: False")
-            continue
-        # time_start = time.time()
-        images, img_marked = splitImg(frame)
-        # time_end = time.time()
-        # print('分割图片用时', time_end - time_start, 's')
+        """测试按钮 以后删除"""
+        self.btn_dish_over.clicked.connect(self.dish_test_signal)
+        self.btn_bill_over.clicked.connect(self.bill_test_signal)
+        
+    def set_ui(self):
+        self.setupUi(self)
+        self.face_disp_label.setScaledContents(True)
 
-        if not images:
-            print("> 未发现餐盘")
-            if control.empty():
-                control.put((True, False))  # 未发现餐盘，继续进行餐盘识别进程
-            continue
-        # cv2.imwrite("img_marked.jpg", img_marked)
-        print(f"> 发现了{len(images)}个餐盘")
-        id_found = False
-        name_found = False
-        # 返回各分割图片识别结果
-        for image in images:
-            plate = Plate()
-            image_buffer = CVEncodeb64(image)
-            # time_start = time.time()
-            print("> 开始检测餐盘id")
-            id_found = plate.getID(baiduAPI, image_buffer)
-            if not id_found:
-                print("  > 未发现餐盘id")
-                break
-            print(f"  > 餐盘id: {plate.id}")
-            # time_end = time.time()
-            # print('ID识别用时', time_end - time_start, 's')
-            if db.findPlate(plate.id) or db.findRecord(plate.id):
-                print(f"> 该餐盘({plate.id})已经成功识别并记录")
-                continue
+    """前端启动"""
+    def start(self):       
+        self.start_face()
+        self.show()
 
-            if db.findPlate(plate.id):
-                print(f"> 请拿走餐盘({plate.id})")
-                if control.empty():
-                    control.put((True, False))  # 等待餐盘拿走，继续进行餐盘识别进程
-                break
+    def start_face(self):
+        self.face_search_proc.start()
+        self.face_thread.start()
 
-            # time_start = time.time()
-            print("> 开始进行菜品识别")
-            name_found = plate.getName(baiduAPI, image_buffer)
-            if not name_found:
-                print("  > 菜品识别失败")
-                break
-            print(f"  > 菜名:{plate.name}")
-            # time_end = time.time()
-            # print('菜品识别用时', time_end - time_start, 's')
+    def init_face(self):
 
-            plate.searchDB(db)
-            # 保存到本地数据库
-            plate.saveInfo(db)
+        # 创建人脸子进程
+        self.face_search_proc = Face_search()
+        self.face_img_buffer = self.face_search_proc.image_buffer
+        self.face_search_proc.bind_flag(self.dish_flag_queue, self.user_flag_queue)
 
-        if (not id_found) or (not name_found):
-            if control.empty():
-                control.put((False, True))  # 把取出来的再还回去
-            continue
+        # 创建人脸显示子线程 并绑定信号
+        self.face_thread = Accept_face_thread(self.db,
+                                              self.user,
+                                              self.face_img_buffer, 
+                                              self.user_flag_queue,
+                                              self.over_flag_queue, 
+                                              self.face_disp_timer,)
+        
+        self.face_thread.disp_face_signal.connect(self.disp_face_video)
+        self.face_disp_timer.timeout.connect(self.face_thread.send_disp_signal)
+        self.face_thread.timer_start_signal.connect(self.face_disp_timer.start)
+        self.face_thread.disp_user_id_signal.connect(self.disp_user_id)
 
-        # for循环中所有图片的id和name都识别到了
-        # 发送给人脸识别进程True，可以开始人脸识别
-        control.put((False, True))
+    # 前端显示人脸
+    def disp_face_video(self, face_video_img):
+        self.face_disp_label.setPixmap(QPixmap.fromImage(face_video_img))
+    
+    # 前端显示用户id
+    def disp_user_id(self):
+        user_id = self.face_search_proc.user_id_buffer.get()
+        self.user_id_label.setText(user_id)
+        self.welcome_label.setText("Welcome！")
 
+    """前端关闭 事件处理"""
+    def closeEvent(self, event):
+        # 关闭人脸显示线程
+        self.face_thread.stop()
+        
+        # 关闭人脸检测进程
+        self.face_search_proc.stop()
+        time.sleep(1)
+        self.face_search_proc.terminate()
+        self.face_search_proc.join()
 
-def plateDisplay(q):
-    count = 0
-    while True:
-        ret, show = plate_cap.read()
-        if not ret:
-            print('No camera')
-            continue
+        # 关闭前端窗口
+        event.accept()
 
-        # 传递帧给main_process进程，这里取隔100帧发送一次zWASX
-        if count == 100:
-            q.put(show)
-            count = 0
-        else:
-            count += 1
-        # cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-        # cv2.reszieWindow('image', 680, 400)
-        cv2.imshow('image', show)
+    """菜品准备完成  测试按钮"""
+    def dish_test_signal(self):
+        if self.dish_flag_queue.empty():
+            self.dish_flag_queue.put((False, True))
+            print("dish over signal send -> ")
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    def bill_test_signal(self):
+        if self.over_flag_queue.full():
+            _ = self.over_flag_queue.get()
+            self.face_thread.condition_lock.wakeAll()
 
+"""接受人脸显示线程"""
+class Accept_face_thread(QThread):
 
-def userRecognize(q: Queue, control: Queue):
-    while True:
-        frame = q.get()
-        if not control.get()[1]:
-            control.put((True, False))  # 把取出来的再还回去
-            print("[debug] user: False")
-            continue
+    disp_face_signal = pyqtSignal(QImage)
+    timer_start_signal = pyqtSignal(int)
+    disp_user_id_signal = pyqtSignal()
 
-        user = User()
-        print("> 开始人脸识别")
-        found = user.getID(frame)
-        if not found:
-            if control.empty():
-                control.put((True, False))  # 把取出来的再还回去
-            print("  > 未找到用户")
-            continue
-        print(f"  > 用户id: {user.id}")
+    def __init__(self, 
+                 db,
+                 user,
+                 image_buffer, 
+                 user_flag_queue,
+                 over_flag_queue,
+                 disp_timer):
 
-        # 写入数据库
-        user.saveInfo(db)
-        user.pay(db)
+        super().__init__()
+        self.image_buffer = image_buffer
+        self.user_flag_queue = user_flag_queue
+        self.over_flag_queue = over_flag_queue
+        self.disp_timer = disp_timer
+        self.user = user
+        self.db = db
+        self.mutex = QMutex()
+        self.condition_lock = QWaitCondition() 
 
-        db.commitRecord()
-        db.pushRecord()
-        db.cleanRecord()
+    def stop(self):
+        self.disp_timer.stop()
+        self.terminate()
 
-        control.put((True, False))
+    def send_disp_signal(self):
+        self.disp_face_signal.emit(self.img_disp)   # 发射显示人脸图像的信号
 
+    def run(self):
+        img = self.image_buffer.get()
 
-def userDisplay(q):
-    count = 0
-    while face_cap.isOpened():
-        ret, show = face_cap.read()
-        if not ret:
-            print('No camera')
-            continue
+        while True:
+            # 如果人脸识别到用户 获得id
+            if self.user_flag_queue.full():
+                _ = self.user_flag_queue.get()
+                self.disp_user_id_signal.emit() 
+              
+                # 替换的用户的图片
+                img = cv2.imread("./UI_project/girl.png")
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        # 传递帧给main_process进程，这里取隔100帧发送一次
-        if count == 20:
-            q.put(show)
-            count = 0
-        else:
-            count += 1
-        cv2.imshow('face_detect', show)
+                """数据库读写"""
+                # self.user.saveInfo(self.db)
+                # self.user.pay(self.db)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+                # self.db.commitRecord()
+                # self.db.pushRecord()
+                # self.db.cleanRecord()
 
+                # 替换为用户图片 并将线程挂起 等待唤醒
+                self.over_flag_queue.put(True)
+                self.img_disp = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
+                self.disp_face_signal.emit(self.img_disp)
+            
+                self.condition_lock.wait(self.mutex)
+            else:
+                if not self.image_buffer.empty():
+                    img = self.image_buffer.get()
 
-if __name__ == '__main__':
-    db = Database("mongodb://localhost:27017/", "SmartCanteen")
-    plate_cap = cv2.VideoCapture(1)
-    face_cap = cv2.VideoCapture(2)
-    baiduAPI = BaiduAPI()
-    plate_captures = Queue()
-    face_captures = Queue()
-    control = Queue(1)
-    control.put((True, False))
+            # 前端显示
+            self.img_disp = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
+            # 前端显示计时器启动信号 每10ms发送一次显示的图片
+            if self.disp_timer.isActive() == False:
+                self.timer_start_signal.emit(10)
 
-    plate_disp_process = Process(target=plateDisplay, args=(plate_captures,))
-    plate_recg_process = Process(target=plateRecognize, args=(plate_captures, control))
-    user_disp_process = Process(target=userDisplay, args=(face_captures,))
-    user_recg_process = Process(target=userRecognize, args=(face_captures, control))
+"""接受菜品识别线程"""
+class Accept_dish_thread(QThread):
+    def __init__(self, over_flag_queue, dish_flag_queue):
+        super().__init__()
+        self.over_flag_queue = over_flag_queue
+        self.dish_flag_queue = dish_flag_queue
+        
+if __name__ == "__main__":
 
-    plate_disp_process.start()
-    plate_recg_process.start()
-    user_disp_process.start()
-    user_recg_process.start()
+    """前端主程序创建"""
+    app = QApplication(sys.argv)
+    main = Main_app()
 
-    # 等待显示进程结束，结束后就关闭识别进程
-    plate_disp_process.join()
-    plate_recg_process.terminate()
-    user_disp_process.join()
-    user_recg_process.terminate()
+    """启动"""
+    main.start()
 
-    plate_cap.release()
-    face_cap.release()
-    cv2.destroyAllWindows()
+    """退出"""
+    sys.exit(app.exec_())
