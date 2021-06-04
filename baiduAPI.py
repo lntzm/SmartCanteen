@@ -73,8 +73,8 @@ class BaiduAPI:
         if 'error_code' in result_json.keys():
             print("> ERROR: ", result_json['error_msg'])
             if result_json['error_code'] == 18:
-                print("  request too fast, sleep 3s.")
-                time.sleep(3)
+                print("  request too fast, sleep 1s.")
+                time.sleep(1)
                 return None, None, None
 
         # 获得图片结果
