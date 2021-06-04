@@ -55,7 +55,7 @@ def main_process(q):
             id_found = plate.getID(baiduAPI, image_buffer)
             if not id_found:
                 print("  > fail to recognize plate id")
-                break
+                continue
             print("  > plate id:", plate.id)
 
             plate_info = db.findPlate(plate.id)
@@ -63,18 +63,19 @@ def main_process(q):
                 print(" > plate hasn't recorded, error")
                 continue
             elif plate_info['eaten']:
-                plate.eaten = False
-                print(" > plate was eaten, error")
+                # plate.eaten = False
+                print(" > plate was recong2nd, error")
                 continue
             else:
                 plate.eaten = True
                 # 保存重量信息
                 plate.rest_weight = weight
-                time1st = datetime.strptime(plate_info['time'], '%Y-%m-%d')
+                time1st = datetime.strptime(plate_info['time'], '%H:%M')
+                # time1st = plate_info['time']
                 plate.updateTime(time1st)
                 # 更新到本地数据库
                 plate.updateInfo(db)
-                # plate.saveInfo()
+
         # 识别结束，调用HTML网页显示
 
         # time.sleep(1)
@@ -83,11 +84,11 @@ def main_process(q):
 if __name__ == '__main__':
     GPIO.setmode(GPIO.BCM)
     # 类的定义
-    hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=68753, ratio=433.21)
-    hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=-1660, ratio=430.05)
-    hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=177856, ratio=424.71)
+    hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=172117, ratio=423.88)
+    hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=-2828, ratio=430.74)
+    hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=68090, ratio=432.78)
 
-    db = Database("mongodb://localhost:27017/", "smartCanteen")
+    db = Database("mongodb://192.168.192.131:27017/", "SmartCanteen")
     baiduAPI = BaiduAPI()
     cap = cv2.VideoCapture(0)
     # image_access_token = baiduAPI.fetchToken(baiduAPI.IMAGE_API_KEY, baiduAPI.IMAGE_SECRET_KEY)
@@ -104,7 +105,7 @@ if __name__ == '__main__':
             continue
 
         # 传递帧给main_process进程，这里取隔100帧发送一次
-        if accord == 100:
+        if accord == 30:
             q.put(show)
             accord = 0
         else:

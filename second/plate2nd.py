@@ -1,9 +1,10 @@
 import cv2
 from datetime import datetime
 
+
 class Plate2nd:
     def __init__(self):
-        self.id = 0  # 盘子ID
+        self.id = ""  # 盘子ID
         self.eaten = True  # 第二次，已经吃过
         self.rest_weight = 0  # 剩余重量
         self.time2nd = ""  # 二次记录时间
@@ -16,7 +17,7 @@ class Plate2nd:
         :param image: 输入图片
         :return 是否成功获取盘子ID
         """
-        self.id = baiduAPI.getNumberResult(image_buffer)
+        self.id = str(baiduAPI.getNumberResult(image_buffer))
         if not self.id:
             print("> dish_id not found")
             return False
@@ -37,8 +38,13 @@ class Plate2nd:
     #     self.__db_info = db.findPlate(self.id)
 
     def updateTime(self, time1st):
-        self.time2nd = datetime.now().strftime('%Y-%m-%d %H:%M')
-        self.meal_time = time1st - self.time2nd
+        self.time2nd = datetime.now().strftime('%H:%M')
+        time2nd_datetime = datetime.strptime(self.time2nd, '%H:%M')
+        # self.time2nd = datetime.now().strftime('%Y-%m-%d %H:%M')time.mktime(date_time.timetuple())
+
+        meal_time = time2nd_datetime - time1st
+        # self.meal_time = meal_time.strftime('%H:%M')
+        self.meal_time = str(meal_time)
 
     def updateInfo(self, db):
         """
@@ -51,4 +57,5 @@ class Plate2nd:
             "time2nd": self.time2nd,
             "meal_time": self.meal_time
         }
-        db.addRecord(plate)
+        # print(plate)
+        db.updatePlate(self.id, plate)

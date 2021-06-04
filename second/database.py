@@ -76,7 +76,7 @@ class Database:
 
     def updatePlate(self, dish_id: str, change: dict):
         condition = {'_id': dish_id}
-        self.dishes_db.update_one(condition, {'$set': change})
+        self.plates_db.update_one(condition, {'$set': change})
 
     def addRecord(self, plate: dict):
         self.record.insert_one(plate)
