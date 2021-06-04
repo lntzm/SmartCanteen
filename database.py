@@ -47,7 +47,7 @@ class Database:
         """
         return result
 
-    def findUser(self, user_id: int):
+    def findUser(self, user_id: str):
         result = self.users_db.find_one({'_id': user_id})
         """
         根据user_id查找用户的相关信息
@@ -56,7 +56,7 @@ class Database:
         """
         return result
 
-    def findPlate(self, plate_id: int):
+    def findPlate(self, plate_id: str):
         result = self.plates_db.find_one({'_id': plate_id})
         """
         根据plate_id查找盘子的相关信息
