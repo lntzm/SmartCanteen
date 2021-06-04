@@ -56,6 +56,7 @@ class Plate:
             "protein": self.__db_info['protein'],
             "weight": self.__db_info['weight'],
             "price": self.__db_info['price'],
-            "time": datetime.now().strftime('%Y-%m-%d %H:%M')
+            "date": datetime.now().strftime('%Y-%m-%d'),
+            "time": datetime.now().strftime('%H:%M')
         }
         db.addRecord(plate)
