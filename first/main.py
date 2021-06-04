@@ -5,7 +5,7 @@ from PyQt5.QtCore import *
 from Ui_Main_window import Ui_MainWindow
 from multiprocessing import Queue as ProcQueue
 
-#from database import Database
+from database import Database
 from user import User
 from Face_search_proc import Face_search
 
@@ -95,9 +95,9 @@ class Main_app(QMainWindow, Ui_MainWindow):
             print("dish over signal send -> ")
 
     def bill_test_signal(self):
-        if self.over_flag_queue.full():
-            _ = self.over_flag_queue.get()
-            self.face_thread.condition_lock.wakeAll()
+        if self.over_flag_queue.empty():
+            self.over_flag_queue.put(True)
+            self.face_thread.user_disp_flag = False
 
 """接受人脸显示线程"""
 class Accept_face_thread(QThread):
@@ -121,8 +121,7 @@ class Accept_face_thread(QThread):
         self.disp_timer = disp_timer
         self.user = user
         self.db = db
-        self.mutex = QMutex()
-        self.condition_lock = QWaitCondition() 
+        self.user_disp_flag = False
 
     def stop(self):
         self.disp_timer.stop()
@@ -136,12 +135,12 @@ class Accept_face_thread(QThread):
 
         while True:
             # 如果人脸识别到用户 获得id
-            if self.user_flag_queue.full():
+            if self.user_flag_queue.full() or self.user_disp_flag:
                 _ = self.user_flag_queue.get()
                 self.disp_user_id_signal.emit() 
               
                 # 替换的用户的图片
-                img = cv2.imread("./UI_project/girl.png")
+                img = cv2.imread("./first/girl.png")
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
                 """数据库读写"""
@@ -155,9 +154,7 @@ class Accept_face_thread(QThread):
                 # 替换为用户图片 并将线程挂起 等待唤醒
                 self.over_flag_queue.put(True)
                 self.img_disp = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
-                self.disp_face_signal.emit(self.img_disp)
-            
-                self.condition_lock.wait(self.mutex)
+                self.user_disp_flag = True
             else:
                 if not self.image_buffer.empty():
                     img = self.image_buffer.get()
