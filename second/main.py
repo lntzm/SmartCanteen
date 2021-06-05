@@ -1,4 +1,4 @@
-from plate2nd import Plate2nd
+from plate import Plate
 from database import Database
 from ImageHandle import *
 from hx711 import HX711
@@ -48,7 +48,7 @@ def main_process(q):
         # 返回各分割图片识别结果
         for image, weight in zip(images, weights):
             # 创建dish类和plate1st类
-            plate = Plate2nd()
+            plate = Plate()
             # 是否找到该盘子记录
             image_buffer = CVEncodeb64(image)
             print("> start getting IDs")

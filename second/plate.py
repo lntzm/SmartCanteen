@@ -1,11 +1,12 @@
-import cv2
 from datetime import datetime
 
-class Plate2nd:
+
+class Plate:
     def __init__(self):
         self.id = 0  # 盘子ID
         self.eaten = True  # 第二次，已经吃过
         self.rest_weight = 0  # 剩余重量
+        self.__db_info = None
         self.time2nd = ""  # 二次记录时间
         self.meal_time = 0  # 用餐时长
 
@@ -18,10 +19,7 @@ class Plate2nd:
         """
         self.id = baiduAPI.getNumberResult(image_buffer)
         if not self.id:
-            print("> dish_id not found")
             return False
-        else:
-            print("> dish_id:", self.id)
         return True
 
     def getWeight(self, hx711):
@@ -30,11 +28,17 @@ class Plate2nd:
         :param
         :return:
         """
-        self.rest_weight = hx711.get_weight_mean(5)
-        pass
+        weight = hx711.get_weight_mean(5)
+        self.rest_weight = 0 if -10 < weight < 0 else weight
 
     # def searchDB(self, db):
     #     self.__db_info = db.findPlate(self.id)
+
+    def getInfoBefore(self, db):
+        self.__db_info = db.findNoEatenPlate(self.id)
+        if not self.__db_info:
+            return False
+        return True
 
     def updateTime(self, time1st):
         self.time2nd = datetime.now().strftime('%Y-%m-%d %H:%M')
@@ -45,10 +49,12 @@ class Plate2nd:
         将所有信息汇总成一个字典
         :return: 字典类型，所有成员变量
         """
+        self.time2nd = datetime.now().strftime('%Y-%m-%d %H:%M')
+        self.meal_time = self.__db_info['start_time'] - self.time2nd
         plate = {
             "eaten": self.eaten,
             "rest_weight": self.rest_weight,
-            "time2nd": self.time2nd,
+            "finish_time": self.time2nd,
             "meal_time": self.meal_time
         }
-        db.addRecord(plate)
+        db.updatePlate(plate)

@@ -3,7 +3,7 @@ import json
 import time
 
 
-class DB:
+class DBCloud:
     def __init__(self):
         self.WECHAT_URL = 'https://api.weixin.qq.com/'
         self.APP_ID = 'wx0d22019eaad3050c'
@@ -132,7 +132,7 @@ class DB:
 
 if __name__ == '__main__':
     info = {'_id': '3333', 'key': 1, 'value': 'dick_asstest', 'kj': 4040}
-    db1 = DB()
+    db1 = DBCloud()
 
     start = time.time()
     db1.addUser(info)

@@ -161,7 +161,7 @@ class PlateRecgThread(Thread):
                     print(f"> 该餐盘({plate.id})已经成功识别并记录")
                     continue
 
-                if self.db.findPlate(plate.id):
+                if self.db.findNoEatenPlate(plate.id):
                     print(f"> 餐盘({plate.id})已属于其他用户，请拿走餐盘")
                     return
 

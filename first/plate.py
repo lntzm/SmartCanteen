@@ -57,6 +57,6 @@ class Plate:
             "weight": self.__db_info['weight'],
             "price": self.__db_info['price'],
             "date": datetime.now().strftime('%Y-%m-%d'),
-            "time": datetime.now().strftime('%H:%M')
+            "start_time": datetime.now().strftime('%H:%M')
         }
         db.addRecord(plate)
