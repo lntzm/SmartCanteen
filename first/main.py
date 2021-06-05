@@ -22,22 +22,19 @@ class Main_app(QMainWindow, Ui_MainWindow):
         self.dish_flag_queue = ProcQueue(1)  # 菜品识别完毕标志
         self.start_flag_queue = ProcQueue(1)  # 用户结算完毕标志
         self.face_disp_timer = QTimer()  # 人脸显示 定时器
-        self.dish_disp_timer = QTimer()
+        self.dish_disp_timer = QTimer() # 菜品显示 定时器
         self.user = User()
 
         self.set_ui()  # 初始化窗口UI
         self.db = Database("mongodb://localhost:27017/", "SmartCanteen")  # 初始化数据库
-        self.init_dish()
+        self.init_dish()    # 初始化菜品识别（进程 + 线程）
         self.init_face()  # 初始化人脸（进程 + 线程）
-
-        # """测试按钮 以后删除"""
-        # self.btn_dish_over.clicked.connect(self.dish_test_signal)
-        # self.btn_bill_over.clicked.connect(self.bill_test_signal)
 
     def set_ui(self):
         self.setupUi(self)
+        self.ui_disp_logo()
         self.face_disp_label.setScaledContents(True)
-        self.plate_disp.setScaledContents(True)
+        self.plate_disp_label.setScaledContents(True)
 
     """前端启动"""
 
@@ -96,13 +93,22 @@ class Main_app(QMainWindow, Ui_MainWindow):
         self.face_disp_label.setPixmap(QPixmap.fromImage(face_video_img))
 
     def disp_dish_video(self, dish_video_img):
-        self.plate_disp.setPixmap(QPixmap.fromImage(dish_video_img))
+        self.plate_disp_label.setPixmap(QPixmap.fromImage(dish_video_img))
 
     # 前端显示用户id
     def disp_user_id(self):
         user_id = self.face_search_proc.user_id_buffer.get()
         self.user_id_label.setText(user_id)
         self.welcome_label.setText("Welcome！")
+
+    # 前端显示logo
+    def ui_disp_logo(self):
+        logo = cv2.imread("./first/logo.png")
+        logo = cv2.resize(logo, (160, 120))
+        logo = cv2.cvtColor(logo, cv2.COLOR_BGR2RGB)
+        logo = QImage(logo.data, logo.shape[1], logo.shape[0], QImage.Format_RGB888)
+        self.logo_label.setScaledContents(True)
+        self.logo_label.setPixmap(QPixmap.fromImage(logo))
 
     """前端关闭 事件处理"""
 
@@ -126,18 +132,6 @@ class Main_app(QMainWindow, Ui_MainWindow):
 
         # 关闭前端窗口
         event.accept()
-
-    # """菜品准备完成  测试按钮"""
-    # 
-    # def dish_test_signal(self):
-    #     if self.dish_flag_queue.empty():
-    #         self.dish_flag_queue.put((False, True))
-    #         print("dish over signal send -> ")
-    # 
-    # def bill_test_signal(self):
-    #     if self.start_flag_queue.empty():
-    #         self.start_flag_queue.put(True)
-    #         self.face_thread.user_disp_flag = False
 
 
 """接受人脸显示线程"""
@@ -226,7 +220,7 @@ class Accept_dish_thread(QThread):
         self.terminate()
 
     def send_disp_signal(self):
-        self.disp_dish_signal.emit(self.img_disp)  # 发射显示人脸图像的信号
+        self.disp_dish_signal.emit(self.img_disp)  # 发射显示菜品图像的信号
 
     def run(self):
         img = self.img_buffer.get()

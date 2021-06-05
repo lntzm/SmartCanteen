@@ -14,54 +14,88 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout" rowstretch="0" columnstretch="10,1,8">
+   <layout class="QGridLayout" name="gridLayout" rowstretch="0" columnstretch="20,1,16">
     <item row="0" column="1">
      <layout class="QVBoxLayout" name="middle_space"/>
     </item>
     <item row="0" column="0">
-     <layout class="QVBoxLayout" name="left_layout" stretch="4,1,6">
+     <layout class="QVBoxLayout" name="left_layout" stretch="4,10,1,14">
       <item>
-       <widget class="QTextEdit" name="dish_list">
-        <property name="font">
-         <font>
-          <family>Adobe Devanagari</family>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="left_middle_space" stretch="0,0,0,0,0">
+       <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="8,1,24,1">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_3"/>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btn_dish_over">
+         <widget class="QLabel" name="logo_label">
+          <property name="frameShape">
+           <enum>QFrame::Box</enum>
+          </property>
           <property name="text">
-           <string>菜品好了</string>
+           <string/>
           </property>
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2"/>
+         <layout class="QHBoxLayout" name="horizontalLayout_11"/>
         </item>
         <item>
-         <widget class="QPushButton" name="btn_bill_over">
+         <widget class="QLabel" name="sys_name_labe">
+          <property name="font">
+           <font>
+            <family>Bauhaus 93</family>
+            <pointsize>40</pointsize>
+           </font>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <property name="lineWidth">
+           <number>3</number>
+          </property>
           <property name="text">
-           <string>结算完了</string>
+           <string>Smart Canteen</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout"/>
+         <layout class="QHBoxLayout" name="horizontalLayout_9"/>
         </item>
        </layout>
       </item>
       <item>
-       <widget class="QLabel" name="plate_disp">
+       <layout class="QHBoxLayout" name="horizontalLayout_10">
+        <item>
+         <widget class="QTextEdit" name="textEdit">
+          <property name="font">
+           <font>
+            <family>微软雅黑</family>
+            <pointsize>16</pointsize>
+           </font>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Panel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <property name="lineWidth">
+           <number>2</number>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="left_middle_space" stretch=""/>
+      </item>
+      <item>
+       <widget class="QLabel" name="plate_disp_label">
         <property name="frameShape">
          <enum>QFrame::Box</enum>
         </property>
@@ -112,17 +146,17 @@
            <widget class="QLabel" name="fixed_id_label">
             <property name="font">
              <font>
-              <family>Adobe Devanagari</family>
-              <pointsize>16</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
+              <family>微软雅黑</family>
+              <pointsize>26</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="frameShape">
              <enum>QFrame::WinPanel</enum>
             </property>
             <property name="text">
-             <string>ID</string>
+             <string>用户</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -133,10 +167,10 @@
            <widget class="QLabel" name="user_id_label">
             <property name="font">
              <font>
-              <family>Adobe Devanagari</family>
-              <pointsize>16</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
+              <family>微软雅黑</family>
+              <pointsize>26</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="frameShape">
@@ -181,9 +215,9 @@
             <property name="font">
              <font>
               <family>Adobe Devanagari</family>
-              <pointsize>16</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
+              <pointsize>28</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
