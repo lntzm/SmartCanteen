@@ -1,122 +1,81 @@
-from plate import Plate
+import sys
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from Ui_Main_window2 import Ui_MainWindow2
+from multiprocessing import Queue as ProcQueue
+
 from database import Database
-from ImageHandle import *
-from hx711 import HX711
-from baiduAPI import BaiduAPI
-from datetime import datetime
+from user import User
+from PlateProcess import RecgProcess, CapProcess
 
-import RPi.GPIO as GPIO
 import time
-from multiprocessing import Process, Queue
+import cv2
 
 
-def main_process(q):
-    while True:
-        frame = q.get()
-        images, locs = splitImg(frame)
+class Main_app(QMainWindow, Ui_MainWindow):
 
-        if not images:
-            print("> plates not detected")
-            continue
-        print("分割到", len(images), "个区域")
+    def __init__(self):
+        super().__init__()
 
-        weights = []
-        hx1_weight = hx1.get_weight_mean(5)
-        hx2_weight = hx2.get_weight_mean(5)
-        hx3_weight = hx3.get_weight_mean(5)
-        if hx1_weight:
-            weights.append(hx1_weight)
-            print("检测到1号盘子，重量为：", hx1_weight)
+        self.dish_disp_timer = QTimer() # 菜品显示 定时器
+        self.user = User()
 
-        if hx2_weight:
-            weights.append(hx2_weight)
-            print("检测到2号盘子，重量为：", hx2_weight)
+        self.set_ui()  # 初始化窗口UI
+        self.db = Database("mongodb://localhost:27017/", "SmartCanteen")  # 初始化数据库
+        self.init_dish()    # 初始化菜品识别（进程 + 线程）
 
-        if hx3_weight:
-            weights.append(hx3_weight)
-            print("检测到3号盘子，重量为：", hx3_weight)
+    def set_ui(self):
+        self.setupUi(self)
+        self.ui_disp_logo()
+        self.plate_disp_label.setScaledContents(True)
 
-        # 根据分割区域将重量与盘子对应
-        num_conflict, weights = synchronize(locs, weights)
-        if num_conflict:
-            print("分割结果与重量检测不匹配")
-            continue
+    """前端启动"""
 
-        id_found = False
-        name_found = False
-        # 二次识别
-        # 返回各分割图片识别结果
-        for image, weight in zip(images, weights):
-            # 创建dish类和plate1st类
-            plate = Plate()
-            # 是否找到该盘子记录
-            image_buffer = CVEncodeb64(image)
-            print("> start getting IDs")
-            id_found = plate.getID(baiduAPI, image_buffer)
-            if not id_found:
-                print("  > fail to recognize plate id")
-                break
-            print("  > plate id:", plate.id)
+    def start(self):
+        self.start_dish()
+        self.show()
 
-            plate_info = db.findPlate(plate.id)
-            if not plate_info:
-                print(" > plate hasn't recorded, error")
-                continue
-            elif plate_info['eaten']:
-                plate.eaten = False
-                print(" > plate was eaten, error")
-                continue
-            else:
-                plate.eaten = True
-                # 保存重量信息
-                plate.rest_weight = weight
-                time1st = datetime.strptime(plate_info['time'], '%Y-%m-%d')
-                plate.updateTime(time1st)
-                # 更新到本地数据库
-                plate.updateInfo(db)
-                # plate.saveInfo()
-        # 识别结束，调用HTML网页显示
-
-        # time.sleep(1)
+    def start_dish(self):
+        pass
 
 
-if __name__ == '__main__':
-    GPIO.setmode(GPIO.BCM)
-    # 类的定义
-    hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=68753, ratio=433.21)
-    hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=-1660, ratio=430.05)
-    hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=177856, ratio=424.71)
+    def init_dish(self):
+        pass
 
-    db = Database("mongodb://localhost:27017/", "smartCanteen")
-    baiduAPI = BaiduAPI()
-    cap = cv2.VideoCapture(0)
-    # image_access_token = baiduAPI.fetchToken(baiduAPI.IMAGE_API_KEY, baiduAPI.IMAGE_SECRET_KEY)
-    q = Queue()
-    # 第二个进程，用于主程序运行
-    process2 = Process(target=main_process, args=(q,))
-    process2.start()
 
-    accord = 0
-    while True:
-        ret, show = cap.read()
-        if not ret:
-            print('No camera')
-            continue
+    def disp_dish_video(self, dish_video_img):
+        self.plate_disp_label.setPixmap(QPixmap.fromImage(dish_video_img))
 
-        # 传递帧给main_process进程，这里取隔100帧发送一次
-        if accord == 100:
-            q.put(show)
-            accord = 0
-        else:
-            accord += 1
-        # cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-        # cv2.reszieWindow('image', 680, 400)
-        cv2.imshow('image', show)
+    # 前端显示用户id
+    def disp_user_id(self):
+        user_id = self.face_search_proc.user_id_buffer.get()
+        self.user_id_label.setText(user_id)
+        self.welcome_label.setText("Welcome！")
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    # 前端显示logo
+    def ui_disp_logo(self):
+        logo = cv2.imread("./first/logo.png")
+        logo = cv2.resize(logo, (160, 120))
+        logo = cv2.cvtColor(logo, cv2.COLOR_BGR2RGB)
+        logo = QImage(logo.data, logo.shape[1], logo.shape[0], QImage.Format_RGB888)
+        self.logo_label.setScaledContents(True)
+        self.logo_label.setPixmap(QPixmap.fromImage(logo))
 
-    # 等待进程2结束
-    process2.join()
-    cap.release()
-    cv2.destroyAllWindows()
+    """前端关闭 事件处理"""
+
+    def closeEvent(self, event):
+        # 关闭前端窗口
+        event.accept()
+
+
+if __name__ == "__main__":
+    """前端主程序创建"""
+    app = QApplication(sys.argv)
+    main = Main_app()
+
+    """启动"""
+    main.start()
+
+    """退出"""
+    sys.exit(app.exec_())

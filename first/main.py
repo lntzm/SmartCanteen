@@ -23,7 +23,6 @@ class Main_app(QMainWindow, Ui_MainWindow):
         self.start_flag_queue = ProcQueue(1)  # 用户结算完毕标志
         self.face_disp_timer = QTimer()  # 人脸显示 定时器
         self.dish_disp_timer = QTimer() # 菜品显示 定时器
-        self.user = User()
 
         self.set_ui()  # 初始化窗口UI
         self.db = Database("mongodb://localhost:27017/", "SmartCanteen")  # 初始化数据库
@@ -77,7 +76,6 @@ class Main_app(QMainWindow, Ui_MainWindow):
 
         # 创建人脸显示子线程 并绑定信号
         self.face_thread = Accept_face_thread(self.db,
-                                              self.user,
                                               self.face_img_buffer,
                                               self.user_flag_queue,
                                               self.start_flag_queue,
@@ -87,6 +85,8 @@ class Main_app(QMainWindow, Ui_MainWindow):
         self.face_disp_timer.timeout.connect(self.face_thread.send_disp_signal)
         self.face_thread.timer_start_signal.connect(self.face_disp_timer.start)
         self.face_thread.disp_user_id_signal.connect(self.disp_user_id)
+        self.face_thread.disp_clear_signal.connect(self.clear_all_label)
+        self.face_thread.disp_plate_signal.connect(self.disp_plate_list)
 
     # 前端显示人脸
     def disp_face_video(self, face_video_img):
@@ -97,9 +97,15 @@ class Main_app(QMainWindow, Ui_MainWindow):
 
     # 前端显示用户id
     def disp_user_id(self):
-        user_id = self.face_search_proc.user_id_buffer.get()
-        self.user_id_label.setText(user_id)
+        self.user_id_label.setText(self.face_thread.user.id)
         self.welcome_label.setText("Welcome！")
+
+    # 清空所有显示 
+    def clear_all_label(self):
+        self.user_id_label.setText("")
+        self.welcome_label.setText("")
+        self.plate_list_label.setText("")
+        self.total_price_label.setText("")
 
     # 前端显示logo
     def ui_disp_logo(self):
@@ -109,6 +115,23 @@ class Main_app(QMainWindow, Ui_MainWindow):
         logo = QImage(logo.data, logo.shape[1], logo.shape[0], QImage.Format_RGB888)
         self.logo_label.setScaledContents(True)
         self.logo_label.setPixmap(QPixmap.fromImage(logo))
+
+    def disp_plate_list(self):
+        self.total_cost = 0
+        self.show_str = "\n"
+        self.plate_records = self.db.getRecord()
+
+        for plate in self.plate_records:
+            plate_id = plate["_id"]
+            plate_name = plate["dish_name"]
+            plate_price = plate["price"]
+
+            self.total_cost += plate_price
+            self.show_str += "盘子" + str(plate_id) + " " + str(plate_name) + " 单价: "
+            self.show_str += str(plate_price) + " 元" + "\n"
+
+        self.textEdit.setText(self.show_str)
+        self.total_price_label.setText(str(self.total_cost) + " 元")
 
     """前端关闭 事件处理"""
 
@@ -141,10 +164,11 @@ class Accept_face_thread(QThread):
     disp_face_signal = pyqtSignal(QImage)
     timer_start_signal = pyqtSignal(int)
     disp_user_id_signal = pyqtSignal()
+    disp_clear_signal = pyqtSignal()
+    disp_plate_signal = pyqtSignal()
 
     def __init__(self,
                  db,
-                 user,
                  image_buffer,
                  user_flag_queue,
                  start_flag_queue,
@@ -155,8 +179,8 @@ class Accept_face_thread(QThread):
         self.user_flag_queue = user_flag_queue
         self.start_flag_queue = start_flag_queue
         self.disp_timer = disp_timer
-        self.user = user
         self.db = db
+        self.user = User()
         self.user_disp_flag = False
 
     def stop(self):
@@ -170,9 +194,14 @@ class Accept_face_thread(QThread):
         img = self.image_buffer.get()
 
         while True:
-            # 如果人脸识别到用户 获得id
-            if self.user_flag_queue.full() or self.user_disp_flag:
+            if self.user_flag_queue.full():
+                self.disp_plate_signal.emit()
+                no_id_count = 0
+                self.user_disp_flag = True
+                self.test_user = User()
+
                 _ = self.user_flag_queue.get()
+                self.user.id = self.face_search_proc.user_id_buffer.get()
                 self.disp_user_id_signal.emit()
 
                 # 替换的用户的图片
@@ -187,10 +216,19 @@ class Accept_face_thread(QThread):
                 self.db.pushRecord()
                 self.db.cleanRecord()
 
-                # 替换为用户图片 并将线程挂起 等待唤醒
-                self.start_flag_queue.put(True)
-                self.img_disp = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
-                self.user_disp_flag = True
+            if self.user_disp_flag:
+                # 判断人是否离开 从而开始下一个用户
+                test_id_img = self.image_buffer.get()
+                test_user_flag = self.test_user.getID(test_id_img)
+                # 如果检测不到人脸 或者 检测其他人脸
+                if not test_user_flag or self.user.id != self.test_user.id:
+                        time.sleep(0.2)
+                        no_id_count += 1
+                if no_id_count == 6:
+                    self.user_disp_flag = False
+                    self.disp_clear_signal.emit()
+                    self.user = User()
+                    self.start_flag_queue.put(True)
             else:
                 if not self.image_buffer.empty():
                     img = self.image_buffer.get()
