@@ -44,7 +44,8 @@ class PlateRecognize(Process):
                                                  self.plate_img_lock,
                                                  self.recognized_buffer,
                                                  self.db,
-                                                 self.baiduAPI)
+                                                 self.baiduAPI,
+                                                 self.start_flag_queue)
         self.plate_recg_thread.setDaemon(True)
         self.cap_buffer = self.cap_thread.cap_buffer
 
@@ -61,10 +62,11 @@ class PlateRecognize(Process):
                 break
 
             if self.start_flag_queue.empty():
+                # print("start_flag_queue.empty()")
                 self.disp_plate()
                 continue
 
-            if self.start_flag_queue.get():
+            if self.start_flag_queue.full():
                 print("> 接收到餐盘识别启动")
                 self.recognize_plate()
 
@@ -74,6 +76,7 @@ class PlateRecognize(Process):
     def recognize_plate(self):
         # 唤醒识别线程
         self.plate_recg_thread.wakeup()
+        print("wake up")
 
         while True:
             if self.stop_flag[0]:
@@ -111,7 +114,7 @@ class PlateRecognize(Process):
 
 
 class PlateRecgThread(Thread):
-    def __init__(self, image_buffer, img_lock, recognized_buffer, db, baiduAPI):
+    def __init__(self, image_buffer, img_lock, recognized_buffer, db, baiduAPI, start_flag_queue):
         super().__init__()
         self.img_buffer = image_buffer
         self.img_lock = img_lock
@@ -119,6 +122,7 @@ class PlateRecgThread(Thread):
         self.baiduAPI = baiduAPI
         self.db = db
         self.recognized_buffer = recognized_buffer
+        self.start_flag_queue = start_flag_queue
 
     def block(self):
         self.block_event.wait()
@@ -128,12 +132,17 @@ class PlateRecgThread(Thread):
         self.block_event.set()
 
     def run(self):
-        print(self.img_buffer.qsize())
         frame = self.img_buffer.get()
         while True:
             if not self.img_buffer.empty():
                 with self.img_lock:
                     frame = self.img_buffer.get()
+
+            if self.start_flag_queue.empty():
+                # print("start_flag_queue.empty()")
+                continue
+            else:
+                self.start_flag_queue.full()
             # time_start = time.time()
             images, img_marked = splitImg(frame)
             # time_end = time.time()
@@ -163,6 +172,7 @@ class PlateRecgThread(Thread):
                 # print('ID识别用时', time_end - time_start, 's')
                 if self.db.findRecord(plate.id):
                     print(f"> 该餐盘({plate.id})已经成功识别并记录")
+                    name_found = True   # 有记录时，表明菜品一定是有记录的
                     continue
 
                 if self.db.findNoEatenPlate(plate.id):
@@ -188,5 +198,6 @@ class PlateRecgThread(Thread):
                 continue
 
             # for循环中所有图片的id和name都识别到了
+            self.start_flag_queue.get()
             self.recognized_buffer.put(True)
-            self.block()
+            # self.block()

@@ -21,7 +21,7 @@ class Plate:
         # # 识别结果和位置
         # self.id, points = detector.detectAndDecode(image)
         self.id = baiduAPI.getNumberResult(image_buffer)
-        if not self.id:
+        if not self.id or self.id == "非菜":
             return False
         else:
             return True
@@ -47,7 +47,7 @@ class Plate:
         :return: 字典类型，所有成员变量
         """
         plate = {
-            "_id": self.id,
+            "plate_id": self.id,
             "eaten": self.eaten,
             "dish_name": self.name,
             "calories": self.__db_info['calories'],

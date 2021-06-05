@@ -79,6 +79,7 @@ class Main_app(QMainWindow, Ui_MainWindow):
                                               self.face_img_buffer,
                                               self.user_flag_queue,
                                               self.start_flag_queue,
+                                              self.face_search_proc.user_id_buffer,
                                               self.face_disp_timer)
 
         self.face_thread.disp_face_signal.connect(self.disp_face_video)
@@ -122,7 +123,7 @@ class Main_app(QMainWindow, Ui_MainWindow):
         self.plate_records = self.db.getRecord()
 
         for plate in self.plate_records:
-            plate_id = plate["_id"]
+            plate_id = plate["plate_id"]
             plate_name = plate["dish_name"]
             plate_price = plate["price"]
 
@@ -130,7 +131,7 @@ class Main_app(QMainWindow, Ui_MainWindow):
             self.show_str += "盘子" + str(plate_id) + " " + str(plate_name) + " 单价: "
             self.show_str += str(plate_price) + " 元" + "\n"
 
-        self.textEdit.setText(self.show_str)
+        self.plate_list_label.setText(self.show_str)
         self.total_price_label.setText(str(self.total_cost) + " 元")
 
     """前端关闭 事件处理"""
@@ -172,12 +173,14 @@ class Accept_face_thread(QThread):
                  image_buffer,
                  user_flag_queue,
                  start_flag_queue,
+                 id_buffer,
                  disp_timer):
 
         super().__init__()
         self.image_buffer = image_buffer
         self.user_flag_queue = user_flag_queue
         self.start_flag_queue = start_flag_queue
+        self.id_buffer = id_buffer
         self.disp_timer = disp_timer
         self.db = db
         self.user = User()
@@ -201,7 +204,7 @@ class Accept_face_thread(QThread):
                 self.test_user = User()
 
                 _ = self.user_flag_queue.get()
-                self.user.id = self.face_search_proc.user_id_buffer.get()
+                self.user.id = self.id_buffer.get()
                 self.disp_user_id_signal.emit()
 
                 # 替换的用户的图片

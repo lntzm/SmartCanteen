@@ -90,8 +90,8 @@ class Database:
     def addRecord(self, plate: dict):
         self.record.insert_one(plate)
 
-    def findRecord(self, plate_id: int):
-        return self.plates_db.find_one({'plate_id': plate_id})
+    def findRecord(self, plate_id: str):
+        return self.record.find_one({'plate_id': plate_id})
 
     def getRecord(self):
         return self.record.find()
@@ -211,5 +211,5 @@ class DBCloud:
 
 if __name__ == '__main__':
     db = Database("mongodb://localhost:27017/", "SmartCanteen")
-    db.syncDish()
+
     pass
