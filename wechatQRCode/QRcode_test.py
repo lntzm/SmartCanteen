@@ -6,11 +6,14 @@ import time
 
 
 def QRcode(img):
-    detector = cv2.wechat_qrcode_WeChatQRCode("detect.prototxt", "detect.caffemodel", "sr.prototxt",
-                                              "sr.caffemodel")
+    detector = cv2.wechat_qrcode_WeChatQRCode("./wechatQRCode/detect.prototxt",
+                                              "./wechatQRCode/detect.caffemodel",
+                                              "./wechatQRCode/sr.prototxt",
+                                              "./wechatQRCode/sr.caffemodel")
     # 识别结果和位置
     res, points = detector.detectAndDecode(img)
     return res
+
 
 def bright_enhance(img):
     for b in range(5):
@@ -26,6 +29,7 @@ def bright_enhance(img):
             return temp
         return False
 
+
 def contrast_enhance(img):
     for c in range(5):
         contrast_enhancer = ImageEnhance.Contrast(img)
@@ -39,6 +43,7 @@ def contrast_enhance(img):
             return temp
         return False
 
+
 def sort_image(images, locs):
     locs_array = np.array([locs[i][0] for i in range(len(locs))])
     locs_sorts = np.sort(locs_array)
@@ -50,12 +55,13 @@ def sort_image(images, locs):
 
     return images_sort
 
+
 if __name__ == '__main__':
     cap = cv2.VideoCapture(1)
     baiduAPI = BaiduAPI()
-    index = [False, False, False]
-    # result = [[], [], []]
-    result = ['', '', '']
+    # index = [False, False, False]
+    result = [None, None, None]
+    # result = ['', '', '']
     count = 0
     fail = 0
     bright = 0
@@ -75,11 +81,10 @@ if __name__ == '__main__':
             continue
         print("分割到", len(images), "个区域")
 
-        # for i, image in enumerate(images):
-        #     if result[i]:
-        #         continue
-        #     result[i] = QRcode(image)
-
+        for i, image in enumerate(images):
+            if result[i]:
+                continue
+            result[i] = QRcode(image)
 
         for i, image in enumerate(images):
             # 微信识别
@@ -116,11 +121,9 @@ if __name__ == '__main__':
 
             # print(result[j])
 
-
             # # 百度API识别
             # image_buffer = CVEncodeb64(image)
             # result = baiduAPI.getNumberResult(image_buffer)
-
 
             # for i in range(10):
             #     result = QRcode(image)
@@ -132,7 +135,6 @@ if __name__ == '__main__':
             #         print("<  plate_ID:", result)
             #         break
             # continue
-
 
         # time.sleep(1)
         if cv2.waitKey(1) & 0xFF == ord('q'):

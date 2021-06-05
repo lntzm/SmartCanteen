@@ -52,6 +52,7 @@ class PlateRecognize(Process):
             # 启动盘子摄像头线程
 
             self.cap_thread.start()
+            self.plate_recg_thread.start()
             self.frame = self.cap_buffer.get()
 
         while True:
@@ -140,10 +141,13 @@ class PlateRecgThread(Thread):
 
             if not images:
                 print("> 未发现餐盘")
-                return
+                continue
             # cv2.imwrite("img_marked.jpg", img_marked)
             print(f"> 发现了{len(images)}个餐盘")
 
+            id_found = False
+            illegal_id = False
+            name_found = False
             # 返回各分割图片识别结果
             for image in images:
                 plate = Plate()
@@ -153,7 +157,7 @@ class PlateRecgThread(Thread):
                 id_found = plate.getID(self.baiduAPI, image_b64)
                 if not id_found:
                     print("  > 未发现餐盘id")
-                    return
+                    break
                 print(f"  > 餐盘id: {plate.id}")
                 # time_end = time.time()
                 # print('ID识别用时', time_end - time_start, 's')
@@ -162,15 +166,16 @@ class PlateRecgThread(Thread):
                     continue
 
                 if self.db.findNoEatenPlate(plate.id):
+                    illegal_id = True
                     print(f"> 餐盘({plate.id})已属于其他用户，请拿走餐盘")
-                    return
+                    break
 
                 # time_start = time.time()
                 print("> 开始进行菜品识别")
                 name_found = plate.getName(self.baiduAPI, image_b64)
                 if not name_found:
                     print("  > 菜品识别失败")
-                    return  # 检测到了餐盘id但是识别不出菜品
+                    break  # 检测到了餐盘id但是识别不出菜品
                 print(f"  > 菜名:{plate.name}")
                 # time_end = time.time()
                 # print('菜品识别用时', time_end - time_start, 's')
@@ -178,6 +183,9 @@ class PlateRecgThread(Thread):
                 plate.searchDB(self.db)
                 # 保存到本地数据库
                 plate.saveInfo(self.db)
+
+            if (not id_found) or illegal_id or (not name_found):
+                continue
 
             # for循环中所有图片的id和name都识别到了
             self.recognized_buffer.put(True)

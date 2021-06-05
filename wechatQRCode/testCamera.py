@@ -7,7 +7,7 @@ import cv2
 #     res, points = detector.detectAndDecode(img)
 #     return res
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(2)
 while True:
     ret, frame = cap.read()
     if not ret:

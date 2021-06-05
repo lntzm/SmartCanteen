@@ -8,7 +8,7 @@ from multiprocessing import Queue as ProcQueue
 from database import Database
 from user import User
 from Face_search_proc import Face_search
-from PlateProcess import  PlateRecognize
+from PlateProcess import PlateRecognize
 
 import time
 import cv2
@@ -49,33 +49,32 @@ class Main_app(QMainWindow, Ui_MainWindow):
     def start_dish(self):
         self.plate_recognize_proc.start()
         self.dish_thread.start()
-        
+
     def start_face(self):
         self.face_search_proc.start()
         self.face_thread.start()
-        
-    def init_dish(self):   
-        self.plate_recognize_proc = PlateRecognize(device_id=1,
+
+    def init_dish(self):
+        self.plate_recognize_proc = PlateRecognize(device_id=2,
                                                    db=self.db,
                                                    plate_flag_queue=self.dish_flag_queue,
                                                    start_flag_queue=self.start_flag_queue)
         self.dish_img_buffer = self.plate_recognize_proc.image_buffer
-             
+
         self.dish_thread = Accept_dish_thread(self.start_flag_queue,
                                               self.dish_flag_queue,
                                               self.dish_img_buffer,
                                               self.dish_disp_timer)
-        
+
         self.dish_thread.disp_dish_signal.connect(self.disp_dish_video)
         self.dish_disp_timer.timeout.connect(self.dish_thread.send_disp_signal)
         self.dish_thread.timer_start_signal.connect(self.dish_disp_timer.start)
-        
+
         self.start_flag_queue.put(True)
 
     def init_face(self):
-
         # 创建人脸子进程
-        self.face_search_proc = Face_search(device_id=2)
+        self.face_search_proc = Face_search(device_id=0)
         self.face_img_buffer = self.face_search_proc.image_buffer
         self.face_search_proc.bind_flag(self.dish_flag_queue, self.user_flag_queue)
 
@@ -95,7 +94,7 @@ class Main_app(QMainWindow, Ui_MainWindow):
     # 前端显示人脸
     def disp_face_video(self, face_video_img):
         self.face_disp_label.setPixmap(QPixmap.fromImage(face_video_img))
-        
+
     def disp_dish_video(self, dish_video_img):
         self.plate_disp.setPixmap(QPixmap.fromImage(dish_video_img))
 
@@ -108,12 +107,11 @@ class Main_app(QMainWindow, Ui_MainWindow):
     """前端关闭 事件处理"""
 
     def closeEvent(self, event):
-
         # 关闭菜品显示线程
         self.dish_thread.stop()
         # 关闭人脸显示线程
         self.face_thread.stop()
-        
+
         # 关闭菜品显示进程
         self.plate_recognize_proc.stop()
         time.sleep(1)
@@ -214,7 +212,6 @@ class Accept_face_thread(QThread):
 
 
 class Accept_dish_thread(QThread):
-
     disp_dish_signal = pyqtSignal(QImage)
     timer_start_signal = pyqtSignal(int)
 
@@ -238,11 +235,9 @@ class Accept_dish_thread(QThread):
             if not self.img_buffer.empty():
                 img = self.img_buffer.get()
 
-
             self.img_disp = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
             if self.disp_timer.isActive() == False:
                 self.timer_start_signal.emit(10)
-
 
 
 if __name__ == "__main__":
