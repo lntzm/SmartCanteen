@@ -7,7 +7,10 @@ from PIL import Image
 
 def predict(model, transform, img_path):
     model.eval()
-    image = Image.open(img_path)
+    # image = Image.open(img_path)
+    import cv2
+    image = cv2.imread(img_path)
+    image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     image = transform(image)
     image = image.view(1, 3, 224, 224)
     image = image.to(torch.device("cuda:0"))
