@@ -1,123 +1,153 @@
-from plate2nd import Plate2nd
+from plate import Plate
 from database import Database
 from ImageHandle import *
 from hx711 import HX711
 from baiduAPI import BaiduAPI
-from datetime import datetime
+from wechatSubscribe import WechatSubscribe
 
 import RPi.GPIO as GPIO
-import time
 from multiprocessing import Process, Queue
 
 
-def main_process(q):
-    while True:
-        frame = q.get()
-        images, locs = splitImg(frame)
+class RecgProcess(Process):
+    def __init__(self, img_queue: Queue):
+        super().__init__()
+        self.img_queue = img_queue
+        self.start_enable = False
+        self.end_flag = False
 
-        if not images:
-            print("> plates not detected")
-            continue
-        print("分割到", len(images), "个区域")
+    def loadObject(self, db, wechatSubscribe):
+        self.db = db
+        hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=68753, ratio=433.21)
+        hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=-1660, ratio=430.05)
+        hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=177856, ratio=424.71)
+        self.hxs = [hx1, hx2, hx3]
+        self.plates = [Plate(), Plate(), Plate()]
+        self.got_weight = np.array([False, False, False])
+        self.max_num_plates = len(self.hxs)
+        self.wechatSubs = wechatSubscribe
 
+    def run(self) -> None:
+        while True:
+            frame = self.img_queue.get()
+            if self.end_flag:  # 完成了识别，需要拿走所有餐盘
+                if self.checkAnyWeight():  # 还有重量，continue
+                    print("> 请拿走餐盘")
+                    continue
+                else:  # 全部拿走了，开始下一轮识别
+                    self.end_flag = False
+
+            self.start_enable = self.checkAnyWeight()  # 新一轮，检测到重量开始识别
+            if not self.start_enable:
+                continue
+
+            for hx, plate in zip(self.hxs, self.plates):
+                plate.getWeight(hx)
+            self.got_weight = (np.array([
+                plate.rest_weight for plate in self.plates]) > 0)
+            if np.all(self.got_weight == False):  # 全都未检测到重量
+                print("> 压力传感器未检测到餐盘")
+                continue
+
+            images, locs = splitImg(frame)
+            if not images:
+                print("> 未检测到餐盘图像")
+                continue
+            if len(images) != np.count_nonzero(self.got_weight):
+                print(f"> 压力传感器检测餐盘个数({np.count_nonzero(self.got_weight)})"
+                      f"与餐盘图像个数({len(images)})不符")
+                continue
+
+            sync_imgs = sortImgByHX711(images, locs, self.got_weight)
+            print(f"压力传感器与摄像头均发现了{len(images)}个餐盘")
+
+            for i in range(self.max_num_plates):
+                if not self.got_weight[i]:
+                    continue
+                plate = self.plates[i]
+                # img_b64 = CVEncodeb64(sync_imgs[i])
+                print("> 开始识别餐盘id")
+                id_found = self.plates[i].getID(sync_imgs[i])
+                if not id_found:
+                    print("  > 未发现餐盘id")
+                    break
+                print(f"  > 餐盘id: {plate.id}")
+
+                info_found = plate.getInfoBefore(self.db)
+                if not info_found:
+                    print("> 该餐盘未经历菜品购买阶段！请先购买菜品")
+                    break
+
+                plate.updateInfo(self.db)
+
+            print("> 识别完成")
+            self.wechatSubs.sendMsg("本次用餐结束", "快来看看您的本餐情况吧")
+            self.end_flag = True
+
+    def checkAnyWeight(self):
         weights = []
-        hx1_weight = hx1.get_weight_mean(5)
-        hx2_weight = hx2.get_weight_mean(5)
-        hx3_weight = hx3.get_weight_mean(5)
-        if hx1_weight:
-            weights.append(hx1_weight)
-            print("检测到1号盘子，重量为：", hx1_weight)
+        for hx in self.hxs:
+            weights.append(hx.get_weight_mean(5))
 
-        if hx2_weight:
-            weights.append(hx2_weight)
-            print("检测到2号盘子，重量为：", hx2_weight)
+        got_weight = (np.array(weights) > -10)
+        if np.all(got_weight == False):  # 全都未检测到重量
+            print("> 无重量")
+            return False
+        return True
 
-        if hx3_weight:
-            weights.append(hx3_weight)
-            print("检测到3号盘子，重量为：", hx3_weight)
 
-        # 根据分割区域将重量与盘子对应
-        num_conflict, weights = synchronize(locs, weights)
-        if num_conflict:
-            print("分割结果与重量检测不匹配")
-            continue
+class CapProcess(Process):
+    def __init__(self,
+                 img_queue: Queue,
+                 camera_id,
+                 recg_freq=15):
+        super().__init__()
+        self.img_queue = img_queue
+        self.recg_freq = recg_freq
+        self.camera_id = camera_id
 
-        id_found = False
-        name_found = False
-        # 二次识别
-        # 返回各分割图片识别结果
-        for image, weight in zip(images, weights):
-            # 创建dish类和plate1st类
-            plate = Plate2nd()
-            # 是否找到该盘子记录
-            image_buffer = CVEncodeb64(image)
-            print("> start getting IDs")
-            id_found = plate.getID(baiduAPI, image_buffer)
-            if not id_found:
-                print("  > fail to recognize plate id")
+    def loadObject(self, cap):
+        self.cap = cap
+
+    def run(self) -> None:
+        frame_count = 0
+        while True:
+            ret, frame = self.cap.read()
+            if not ret:
+                print(f'[debug] No camera with device_id {self.camera_id}')
                 continue
-            print("  > plate id:", plate.id)
+            frame_count += 1
 
-            plate_info = db.findPlate(plate.id)
-            if not plate_info:
-                print(" > plate hasn't recorded, error")
-                continue
-            elif plate_info['eaten']:
-                # plate.eaten = False
-                print(" > plate was recong2nd, error")
-                continue
-            else:
-                plate.eaten = True
-                # 保存重量信息
-                plate.rest_weight = weight
-                time1st = datetime.strptime(plate_info['time'], '%H:%M')
-                # time1st = plate_info['time']
-                plate.updateTime(time1st)
-                # 更新到本地数据库
-                plate.updateInfo(db)
-
-        # 识别结束，调用HTML网页显示
-
-        # time.sleep(1)
+            if frame_count == self.recg_freq:
+                self.img_queue.put(frame)
+                frame_count = 0
 
 
 if __name__ == '__main__':
     GPIO.setmode(GPIO.BCM)
-    # 类的定义
-    hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=172117, ratio=423.88)
-    hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=-2828, ratio=430.74)
-    hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=68090, ratio=432.78)
+    db_ip = "192.168.43.1"
+    camera_id = 0
+    db = Database(f"mongodb://{db_ip}:27017/", "smartCanteen")
+    wechatSubscribe = WechatSubscribe()
+    cap = cv2.VideoCapture(camera_id)
+    img_queue = Queue(1)
+    cap_process = CapProcess(img_queue, camera_id)
+    cap_process.loadObject(cap)
+    recg_process = RecgProcess(img_queue)
+    recg_process.loadObject(db, wechatSubscribe)
 
-    db = Database("mongodb://192.168.192.131:27017/", "SmartCanteen")
-    baiduAPI = BaiduAPI()
-    cap = cv2.VideoCapture(0)
-    # image_access_token = baiduAPI.fetchToken(baiduAPI.IMAGE_API_KEY, baiduAPI.IMAGE_SECRET_KEY)
-    q = Queue()
-    # 第二个进程，用于主程序运行
-    process2 = Process(target=main_process, args=(q,))
-    process2.start()
-
-    accord = 0
-    while True:
-        ret, show = cap.read()
-        if not ret:
-            print('No camera')
-            continue
-
-        # 传递帧给main_process进程，这里取隔100帧发送一次
-        if accord == 30:
-            q.put(show)
-            accord = 0
-        else:
-            accord += 1
-        # cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-        # cv2.reszieWindow('image', 680, 400)
-        cv2.imshow('image', show)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    cap_process.start()
+    recg_process.start()
 
     # 等待进程2结束
-    process2.join()
-    cap.release()
-    cv2.destroyAllWindows()
+    try:
+        cap_process.join()
+        recg_process.terminate()
+    except KeyboardInterrupt:
+        if cap_process.is_alive():
+            cap_process.terminate()
+        if recg_process.is_alive():
+            recg_process.terminate()
+    finally:
+        GPIO.cleanup()
+        cap.release()
