@@ -8,7 +8,7 @@ class Capture_thread(Thread):
         super().__init__()
         self.device_id = device_id
         self.cap = cv2.VideoCapture()
-        self.cap_buffer = Queue(8)  # 相机图片缓存
+        self.cap_buffer = Queue(16)  # 相机图片缓存
         self.cap_freq = cap_freq  # 相机缓存写入频率
         self.lock = lock  # 相机缓存锁
 

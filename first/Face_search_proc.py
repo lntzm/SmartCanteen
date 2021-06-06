@@ -69,7 +69,6 @@ class Face_search(Process):
 
             # 如果菜品识别完毕 则开始人脸检测
             dish_over = self.dish_flag_queue.get()
-            print("dish over signal received")
             if dish_over:
                 self.face_search()
 
@@ -108,7 +107,8 @@ class Face_search(Process):
     # 显示人脸摄像头部分
     def disp_face(self):
         with self.cap_lock:
-            if not self.cap_buffer.empty():
+            if not self.cap_buffer.empty() and self.frame_count % 5 == 0:
+
                 self.frame = self.cap_buffer.get()
             self.frame_count += 1
 

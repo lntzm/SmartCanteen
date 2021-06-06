@@ -76,7 +76,6 @@ class PlateRecognize(Process):
     def recognize_plate(self):
         # 唤醒识别线程
         self.plate_recg_thread.wakeup()
-        print("wake up")
 
         while True:
             if self.stop_flag[0]:
@@ -141,8 +140,7 @@ class PlateRecgThread(Thread):
             if self.start_flag_queue.empty():
                 # print("start_flag_queue.empty()")
                 continue
-            else:
-                self.start_flag_queue.full()
+
             # time_start = time.time()
             images, img_marked = splitImg(frame)
             # time_end = time.time()
