@@ -4,7 +4,7 @@ import cv2
 
 
 if __name__ == '__main__':
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     while True:
         ret, frame = cap.read()
         if not ret:
