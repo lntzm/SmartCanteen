@@ -29,9 +29,6 @@ class User:
         else:
             return False  # 没找到
 
-    def getBalance(self, db):
-        self.balance = db.findUser(self.id)["balance"]
-
     def saveInfo(self, db):
         """
         将需要记录到plates数据库的信息汇总成一个字典
@@ -40,6 +37,7 @@ class User:
         db.mergeUserRecord({'user_id': self.id})
 
     def pay(self, db):
+        self.balance = db.findUser(self.id)["balance"]
         prices = 0
         for plate in db.getRecord():
             prices += plate["price"]
