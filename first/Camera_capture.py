@@ -4,13 +4,11 @@ from queue import Queue
 
 
 class Capture_thread(Thread):
-    def __init__(self, lock, device_id=0, cap_freq=10):
+    def __init__(self, device_id=0):
         super().__init__()
         self.device_id = device_id
         self.cap = cv2.VideoCapture()
-        self.cap_buffer = Queue(16)  # 相机图片缓存
-        self.cap_freq = cap_freq  # 相机缓存写入频率
-        self.lock = lock  # 相机缓存锁
+        self.cap_buffer = Queue(32)  # 相机图片缓存
 
     def connect_camera(self):
         # 如果是Linux 则不需要cv2.CAP_DSHOW
@@ -32,16 +30,11 @@ class Capture_thread(Thread):
         print("camera released")
 
     def run(self):
-        frame_count = 0
         while True:
             _, frame = self.cap.read()
             if not _:
                 continue
-            frame_count += 1
 
-            if frame_count == self.cap_freq:
-                with self.lock:
-                    if self.cap_buffer.full():
-                        _ = self.cap_buffer.get()
-                    self.cap_buffer.put(frame)
-                frame_count = 0
+            if self.cap_buffer.full():
+                _ = self.cap_buffer.get()
+            self.cap_buffer.put(frame)

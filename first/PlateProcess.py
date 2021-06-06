@@ -9,6 +9,8 @@ from Camera_capture import Capture_thread
 from baiduAPI import BaiduAPI
 from database import Database
 
+import time
+
 
 class PlateRecognize(Process):
     def __init__(self,
@@ -34,11 +36,10 @@ class PlateRecognize(Process):
         self.start_flag_queue = start_flag_queue
 
     def run(self):
-        self.cap_lock = Lock()
         self.plate_img_lock = Lock()
         self.plate_img_buffer = Queue(6)
 
-        self.cap_thread = Capture_thread(self.cap_lock, self.device_id, cap_freq=1)
+        self.cap_thread = Capture_thread(self.device_id)
         self.cap_thread.setDaemon(True)
         self.plate_recg_thread = PlateRecgThread(self.plate_img_buffer,
                                                  self.plate_img_lock,
@@ -94,14 +95,14 @@ class PlateRecognize(Process):
             if self.recognized_buffer.full():
                 _ = self.recognized_buffer.get()
                 self.plate_flag_queue.put(True)
+                print("> signal send")
                 break
 
     # 显示餐盘摄像头部分
     def disp_plate(self):
-        with self.cap_lock:
-            if not self.cap_buffer.empty():
-                self.frame = self.cap_buffer.get()
-            self.frame_count += 1
+        if not self.cap_buffer.empty():
+            self.frame = self.cap_buffer.get()
+        self.frame_count += 1
 
         if self.image_buffer.full():
             _ = self.image_buffer.get()
@@ -155,11 +156,12 @@ class PlateRecgThread(Thread):
             id_found = False
             illegal_id = False
             name_found = False
+            time_start = time.time()
             # 返回各分割图片识别结果
             for image in images:
                 plate = Plate()
                 image_b64 = CVEncodeb64(image)
-                # time_start = time.time()
+
                 print("> 开始检测餐盘id")
                 id_found = plate.getID(self.baiduAPI, image)
                 if not id_found:
@@ -185,8 +187,6 @@ class PlateRecgThread(Thread):
                     print("  > 菜品识别失败")
                     break  # 检测到了餐盘id但是识别不出菜品
                 print(f"  > 菜名:{plate.name}")
-                # time_end = time.time()
-                # print('菜品识别用时', time_end - time_start, 's')
 
                 plate.searchDB(self.db)
                 # 保存到本地数据库
@@ -196,6 +196,9 @@ class PlateRecgThread(Thread):
                 continue
 
             # for循环中所有图片的id和name都识别到了
+            time_end = time.time()
+            print('[debug] 菜品识别用时', time_end - time_start, 's')
+
             self.start_flag_queue.get()
             self.recognized_buffer.put(True)
             # self.block()

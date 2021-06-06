@@ -185,6 +185,7 @@ class Accept_face_thread(QThread):
         self.db = db
         self.user = User()
         self.user_disp_flag = False
+        self.frame_count = 0
 
     def stop(self):
         self.disp_timer.stop()
@@ -198,6 +199,7 @@ class Accept_face_thread(QThread):
 
         while True:
             if self.user_flag_queue.full():
+                print("face detected")
                 self.disp_plate_signal.emit()
                 no_id_count = 0
                 self.user_disp_flag = True
@@ -210,6 +212,7 @@ class Accept_face_thread(QThread):
                 # 替换的用户的图片
                 img = cv2.imread("./first/girl.png")
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                self.img_disp = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
 
                 """数据库读写"""
                 self.user.saveInfo(self.db)
@@ -225,22 +228,26 @@ class Accept_face_thread(QThread):
                 test_user_flag = self.test_user.getID(test_id_img)
                 # 如果检测不到人脸 或者 检测其他人脸
                 if not test_user_flag or self.user.id != self.test_user.id:
-                        time.sleep(0.2)
-                        no_id_count += 1
-                if no_id_count == 6:
+                    time.sleep(0.2)
+                    no_id_count += 1
+
+                if no_id_count == 5:
                     self.user_disp_flag = False
                     self.disp_clear_signal.emit()
                     self.user = User()
                     self.start_flag_queue.put(True)
+                    self.frame_count = 0
             else:
-                if not self.image_buffer.empty():
+                if not self.image_buffer.empty() and self.frame_count % 8 == 0:
                     img = self.image_buffer.get()
+                self.frame_count += 1
+
 
             # 前端显示
             self.img_disp = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
             # 前端显示计时器启动信号 每10ms发送一次显示的图片
             if self.disp_timer.isActive() == False:
-                self.timer_start_signal.emit(10)
+                self.timer_start_signal.emit(20)
 
 
 """接受菜品识别线程"""
@@ -272,7 +279,7 @@ class Accept_dish_thread(QThread):
 
             self.img_disp = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
             if self.disp_timer.isActive() == False:
-                self.timer_start_signal.emit(10)
+                self.timer_start_signal.emit(20)
 
 
 if __name__ == "__main__":
