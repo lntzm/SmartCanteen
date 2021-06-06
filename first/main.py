@@ -9,6 +9,7 @@ from database import Database
 from user import User
 from Face_search_proc import Face_search
 from PlateProcess import PlateRecognize
+from wechatSubscribe import WechatSubscribe
 
 import time
 import cv2
@@ -26,6 +27,7 @@ class Main_app(QMainWindow, Ui_MainWindow):
 
         self.set_ui()  # 初始化窗口UI
         self.db = Database("mongodb://localhost:27017/", "SmartCanteen")  # 初始化数据库
+        self.wechatSubs = WechatSubscribe()
         self.init_dish()    # 初始化菜品识别（进程 + 线程）
         self.init_face()  # 初始化人脸（进程 + 线程）
 
@@ -122,17 +124,22 @@ class Main_app(QMainWindow, Ui_MainWindow):
         self.show_str = "\n"
         self.plate_records = self.db.getRecord()
 
+        names = ""
         for plate in self.plate_records:
             plate_id = plate["plate_id"]
             plate_name = plate["dish_name"]
             plate_price = plate["price"]
 
+            names += "，" + str(plate_name)
             self.total_cost += plate_price
             self.show_str += "盘子" + str(plate_id) + " " + str(plate_name) + " 单价: "
             self.show_str += str(plate_price) + " 元" + "\n"
 
         self.plate_list_label.setText(self.show_str)
         self.total_price_label.setText(str(self.total_cost) + " 元")
+
+        # 发送微信小程序订阅消息
+        self.wechatSubs.sendMsg(names, str(self.total_cost) + " 元")
 
     """前端关闭 事件处理"""
 
