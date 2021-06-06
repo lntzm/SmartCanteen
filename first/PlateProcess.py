@@ -161,7 +161,7 @@ class PlateRecgThread(Thread):
                 image_b64 = CVEncodeb64(image)
                 # time_start = time.time()
                 print("> 开始检测餐盘id")
-                id_found = plate.getID(self.baiduAPI, image_b64)
+                id_found = plate.getID(self.baiduAPI, image)
                 if not id_found:
                     print("  > 未发现餐盘id")
                     break
