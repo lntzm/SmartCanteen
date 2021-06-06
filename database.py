@@ -87,6 +87,13 @@ class Database:
         condition = {'plate_id': dish_id}
         self.dishes_db.update_one(condition, {'$set': change})
 
+    def updateNoEatenPlate(self, dish_id: str, change: dict):
+        condition = {'plate_id': dish_id, 'eaten': False}
+        self.dishes_db.update_one(condition, {'$set': change})
+
+    def pushUpdateNoEatenPlate(self, dish_id: str, change: dict):
+        self.db_cloud.updateNoEatenPlate(dish_id, change)
+
     def addRecord(self, plate: dict):
         self.record.insert_one(plate)
 
@@ -137,7 +144,7 @@ class DBCloud:
             "query": query
         }
         response = requests.post(self.url, data=json.dumps(data))  # 用来观察数据增加是否成功
-        if json.loads(response.text)['errcode'] != 0:   # 增加失败
+        if json.loads(response.text)['errcode'] != 0:  # 增加失败
             return False
         return True
 
@@ -148,7 +155,7 @@ class DBCloud:
             "query": query
         }
         response = requests.post(self.url, data=json.dumps(data))
-        if json.loads(response.text)['errcode'] != 0:   # 增加失败
+        if json.loads(response.text)['errcode'] != 0:  # 增加失败
             return False
         return True
 
@@ -159,7 +166,7 @@ class DBCloud:
             "query": query
         }
         response = requests.post(self.url, data=json.dumps(data))
-        if json.loads(response.text)['errcode'] != 0:   # 增加失败
+        if json.loads(response.text)['errcode'] != 0:  # 增加失败
             return False
         return True
 
@@ -174,13 +181,13 @@ class DBCloud:
             "query": query
         }
         response = requests.post(self.url, data=json.dumps(data))
-        if json.loads(response.text)['errcode'] != 0:   # 更新失败
+        if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
 
     def updatePlate(self, name: str, change: dict):
         name_str = "'" + name + "'"
-        collection = "db.collection('plates').where({_id:"
+        collection = "db.collection('plates').where({plate_id:"
         text = "}).update({data:"
         query = collection + name_str + text + str(change) + "})"
         # print(query)
@@ -189,7 +196,21 @@ class DBCloud:
             "query": query
         }
         response = requests.post(self.url, data=json.dumps(data))
-        if json.loads(response.text)['errcode'] != 0:   # 更新失败
+        if json.loads(response.text)['errcode'] != 0:  # 更新失败
+            return False
+        return True
+
+    def updateNoEatenPlate(self, name: str, change: dict):
+        name_str = "'" + name + "'"
+        query = "db.collection('plates').where({plate_id:{0}, eaten: False}).update({data:{1}})".format(name_str,
+                                                                                                        str(change))
+        # print(query)
+        data = {
+            "env": self.ENV,
+            "query": query
+        }
+        response = requests.post(self.url, data=json.dumps(data))
+        if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
 
@@ -204,7 +225,7 @@ class DBCloud:
             "query": query
         }
         response = requests.post(self.url, data=json.dumps(data))
-        if json.loads(response.text)['errcode'] != 0:   # 更新失败
+        if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
 

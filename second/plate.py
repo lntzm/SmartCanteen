@@ -31,18 +31,11 @@ class Plate:
         weight = hx711.get_weight_mean(5)
         self.rest_weight = 0 if -10 < weight < 0 else weight
 
-    # def searchDB(self, db):
-    #     self.__db_info = db.findPlate(self.id)
-
     def getInfoBefore(self, db):
         self.__db_info = db.findNoEatenPlate(self.id)
         if not self.__db_info:
             return False
         return True
-
-    def updateTime(self, time1st):
-        self.time2nd = datetime.now().strftime('%Y-%m-%d %H:%M')
-        self.meal_time = time1st - self.time2nd
 
     def updateInfo(self, db):
         """
@@ -57,4 +50,5 @@ class Plate:
             "finish_time": self.time2nd,
             "meal_time": self.meal_time
         }
-        db.updatePlate(plate)
+        db.updateNoEatenPlate(self.__db_info['plate_id'], plate)
+        db.pushUpdateNoEatenPlate(self.__db_info['plate_id'], plate)

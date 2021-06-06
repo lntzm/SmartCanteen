@@ -1,81 +1,153 @@
-import sys
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from Ui_Main_window2 import Ui_MainWindow2
-from multiprocessing import Queue as ProcQueue
-
+from plate import Plate
 from database import Database
-from user import User
-from PlateProcess import RecgProcess, CapProcess
+from ImageHandle import *
+from hx711 import HX711
+from baiduAPI import BaiduAPI
+from datetime import datetime
 
+import RPi.GPIO as GPIO
 import time
-import cv2
+from multiprocessing import Process, Queue
 
 
-class Main_app(QMainWindow, Ui_MainWindow):
-
-    def __init__(self):
+class RecgProcess(Process):
+    def __init__(self, img_queue: Queue):
         super().__init__()
+        self.img_queue = img_queue
+        self.start_enable = False
+        self.end_flag = False
 
-        self.dish_disp_timer = QTimer() # 菜品显示 定时器
-        self.user = User()
+    def loadObject(self, db, baiduAPI):
+        self.db = db
+        self.baiduAPI = baiduAPI
+        hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=68753, ratio=433.21)
+        hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=-1660, ratio=430.05)
+        hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=177856, ratio=424.71)
+        self.hxs = [hx1, hx2, hx3]
+        self.plates = [Plate(), Plate(), Plate()]
+        self.got_weight = np.array([False, False, False])
+        self.max_num_plates = len(self.hxs)
 
-        self.set_ui()  # 初始化窗口UI
-        self.db = Database("mongodb://localhost:27017/", "SmartCanteen")  # 初始化数据库
-        self.init_dish()    # 初始化菜品识别（进程 + 线程）
+    def run(self) -> None:
+        while True:
+            frame = self.img_queue.get()
+            if self.end_flag:  # 完成了识别，需要拿走所有餐盘
+                if self.checkAnyWeight():  # 还有重量，continue
+                    print("> 请拿走餐盘")
+                    continue
+                else:  # 全部拿走了，开始下一轮识别
+                    self.end_flag = False
 
-    def set_ui(self):
-        self.setupUi(self)
-        self.ui_disp_logo()
-        self.plate_disp_label.setScaledContents(True)
+            self.start_enable = self.checkAnyWeight()  # 新一轮，检测到重量开始识别
+            if not self.start_enable:
+                continue
 
-    """前端启动"""
+            for hx, plate in zip(self.hxs, self.plates):
+                plate.getWeight(hx)
+            self.got_weight = (np.array([
+                plate.rest_weight for plate in self.plates]) > 0)
+            if np.all(self.got_weight == False):  # 全都未检测到重量
+                print("> 压力传感器未检测到餐盘")
+                continue
 
-    def start(self):
-        self.start_dish()
-        self.show()
+            images, locs = splitImg(frame)
+            if not images:
+                print("> 未检测到餐盘图像")
+                continue
+            if len(images) != np.count_nonzero(self.got_weight):
+                print(f"> 压力传感器检测餐盘个数({np.count_nonzero(self.got_weight)})"
+                      f"与餐盘图像个数({len(images)})不符")
+                continue
 
-    def start_dish(self):
-        pass
+            sync_imgs = sortImgByHX711(images, locs, self.got_weight)
+            print(f"压力传感器与摄像头均发现了{len(images)}个餐盘")
+
+            for i in range(self.max_num_plates):
+                if not self.got_weight[i]:
+                    continue
+                plate = self.plates[i]
+                img_b64 = CVEncodeb64(sync_imgs[i])
+                print("> 开始识别餐盘id")
+                id_found = self.plates[i].getID(self.baiduAPI, img_b64)
+                if not id_found:
+                    print("  > 未发现餐盘id")
+                    break
+                print(f"  > 餐盘id: {plate.id}")
+
+                info_found = plate.getInfoBefore(self.db)
+                if not info_found:
+                    print("> 该餐盘未经历菜品购买阶段！请先购买菜品")
+                    break
+
+                plate.updateInfo(self.db)
+
+            print("> 识别完成")
+            self.end_flag = True
+
+    def checkAnyWeight(self):
+        weights = []
+        for hx in self.hxs:
+            weights.append(hx.get_weight_mean(5))
+
+        got_weight = (np.array(weights) > -10)
+        if np.all(got_weight == False):  # 全都未检测到重量
+            print("> 无重量")
+            return False
+        return True
 
 
-    def init_dish(self):
-        pass
+class CapProcess(Process):
+    def __init__(self,
+                 img_queue: Queue,
+                 camera_id,
+                 recg_freq=15):
+        super().__init__()
+        self.img_queue = img_queue
+        self.recg_freq = recg_freq
+        self.camera_id = camera_id
+
+    def loadObject(self, cap):
+        self.cap = cap
+
+    def run(self) -> None:
+        frame_count = 0
+        while True:
+            ret, frame = self.cap.read()
+            if not ret:
+                print(f'[debug] No camera with device_id {self.camera_id}')
+                continue
+            frame_count += 1
+
+            if frame_count == self.recg_freq:
+                self.img_queue.put(frame)
+                frame_count = 0
 
 
-    def disp_dish_video(self, dish_video_img):
-        self.plate_disp_label.setPixmap(QPixmap.fromImage(dish_video_img))
+if __name__ == '__main__':
+    GPIO.setmode(GPIO.BCM)
+    db_ip = "192.168.43.1"
+    camera_id = 0
+    db = Database(f"mongodb://{db_ip}:27017/", "smartCanteen")
+    baiduAPI = BaiduAPI()
+    cap = cv2.VideoCapture(camera_id)
+    img_queue = Queue(1)
+    cap_process = CapProcess(img_queue, camera_id)
+    cap_process.loadObject(cap)
+    recg_process = RecgProcess(img_queue)
+    recg_process.loadObject(db, baiduAPI)
 
-    # 前端显示用户id
-    def disp_user_id(self):
-        user_id = self.face_search_proc.user_id_buffer.get()
-        self.user_id_label.setText(user_id)
-        self.welcome_label.setText("Welcome！")
+    cap_process.start()
+    recg_process.start()
 
-    # 前端显示logo
-    def ui_disp_logo(self):
-        logo = cv2.imread("./first/logo.png")
-        logo = cv2.resize(logo, (160, 120))
-        logo = cv2.cvtColor(logo, cv2.COLOR_BGR2RGB)
-        logo = QImage(logo.data, logo.shape[1], logo.shape[0], QImage.Format_RGB888)
-        self.logo_label.setScaledContents(True)
-        self.logo_label.setPixmap(QPixmap.fromImage(logo))
-
-    """前端关闭 事件处理"""
-
-    def closeEvent(self, event):
-        # 关闭前端窗口
-        event.accept()
-
-
-if __name__ == "__main__":
-    """前端主程序创建"""
-    app = QApplication(sys.argv)
-    main = Main_app()
-
-    """启动"""
-    main.start()
-
-    """退出"""
-    sys.exit(app.exec_())
+    # 等待进程2结束
+    try:
+        cap_process.join()
+        recg_process.terminate()
+    except KeyboardInterrupt:
+        if cap_process.is_alive():
+            cap_process.terminate()
+        if recg_process.is_alive():
+            recg_process.terminate()
+    finally:
+        GPIO.cleanup()
+        cap.release()
