@@ -3,10 +3,9 @@ from database import Database
 from ImageHandle import *
 from hx711 import HX711
 from baiduAPI import BaiduAPI
-from datetime import datetime
+from wechatSubscribe import WechatSubscribe
 
 import RPi.GPIO as GPIO
-import time
 from multiprocessing import Process, Queue
 
 
@@ -17,9 +16,8 @@ class RecgProcess(Process):
         self.start_enable = False
         self.end_flag = False
 
-    def loadObject(self, db, baiduAPI):
+    def loadObject(self, db, wechatSubscribe):
         self.db = db
-        self.baiduAPI = baiduAPI
         hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=68753, ratio=433.21)
         hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=-1660, ratio=430.05)
         hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=177856, ratio=424.71)
@@ -27,6 +25,7 @@ class RecgProcess(Process):
         self.plates = [Plate(), Plate(), Plate()]
         self.got_weight = np.array([False, False, False])
         self.max_num_plates = len(self.hxs)
+        self.wechatSubs = wechatSubscribe
 
     def run(self) -> None:
         while True:
@@ -68,7 +67,7 @@ class RecgProcess(Process):
                 plate = self.plates[i]
                 # img_b64 = CVEncodeb64(sync_imgs[i])
                 print("> 开始识别餐盘id")
-                id_found = self.plates[i].getID(self.baiduAPI, sync_imgs[i])
+                id_found = self.plates[i].getID(sync_imgs[i])
                 if not id_found:
                     print("  > 未发现餐盘id")
                     break
@@ -82,6 +81,7 @@ class RecgProcess(Process):
                 plate.updateInfo(self.db)
 
             print("> 识别完成")
+            self.wechatSubs.sendMsg("本次用餐结束", "快来看看您的本餐情况吧")
             self.end_flag = True
 
     def checkAnyWeight(self):
@@ -128,13 +128,13 @@ if __name__ == '__main__':
     db_ip = "192.168.43.1"
     camera_id = 0
     db = Database(f"mongodb://{db_ip}:27017/", "smartCanteen")
-    baiduAPI = BaiduAPI()
+    wechatSubscribe = WechatSubscribe()
     cap = cv2.VideoCapture(camera_id)
     img_queue = Queue(1)
     cap_process = CapProcess(img_queue, camera_id)
     cap_process.loadObject(cap)
     recg_process = RecgProcess(img_queue)
-    recg_process.loadObject(db, baiduAPI)
+    recg_process.loadObject(db, wechatSubscribe)
 
     cap_process.start()
     recg_process.start()
