@@ -1,4 +1,5 @@
 from datetime import datetime
+import cv2
 
 
 class Plate:
@@ -9,17 +10,23 @@ class Plate:
         self.__db_info = None
         self.time2nd = ""  # 二次记录时间
         self.meal_time = 0  # 用餐时长
+        self.QRCodeDetector = cv2.wechat_qrcode_WeChatQRCode("./wechatQRCode/detect.prototxt",
+                                                             "./wechatQRCode/detect.caffemodel",
+                                                             "./wechatQRCode/sr.prototxt",
+                                                             "./wechatQRCode/sr.caffemodel")
 
-    def getID(self, baiduAPI, image_buffer):
+    def getID(self, baiduAPI, img):
         """
         二维码识别获取盘子ID
         :param baiduAI: BaiduAPI类的一个对象，提供识别接口
         :param image: 输入图片
         :return 是否成功获取盘子ID
         """
-        self.id = baiduAPI.getNumberResult(image_buffer)
-        if not self.id:
+        # self.id = baiduAPI.getNumberResult(image_buffer)
+        res, _ = self.QRCodeDetector.detectAndDecode(img)
+        if not res:
             return False
+        self.id = res[0]
         return True
 
     def getWeight(self, hx711):

@@ -66,9 +66,9 @@ class RecgProcess(Process):
                 if not self.got_weight[i]:
                     continue
                 plate = self.plates[i]
-                img_b64 = CVEncodeb64(sync_imgs[i])
+                # img_b64 = CVEncodeb64(sync_imgs[i])
                 print("> 开始识别餐盘id")
-                id_found = self.plates[i].getID(self.baiduAPI, img_b64)
+                id_found = self.plates[i].getID(self.baiduAPI, sync_imgs[i])
                 if not id_found:
                     print("  > 未发现餐盘id")
                     break
