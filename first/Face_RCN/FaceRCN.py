@@ -1,26 +1,18 @@
 import cv2
 import numpy as np
-
+from retinaface import RetinaFace
 from aip import AipFace
 
 from .face_utils import *
 
-# 百度云API参数
-APP_ID = '23931013'
-API_KEY = 'ztwX2ncIovCAKfSPcdfoxdEj'
-SECRET_KEY = 'vfrRf1qdrwPq2oUpOg0DzNRmAp79mUDF'
-image_type = "BASE64"
-
-"""
-python-sdk tutorial
-https://ai.baidu.com/ai-doc/FACE/ek37c1qiz#%E5%AE%89%E8%A3%85%E4%BA%BA%E8%84%B8%E8%AF%86%E5%88%AB-python-sdk
-"""
-
 class FaceRCN():
 
-    def __init__(self):
-        # 建立一个人脸API的对象
-        self.client = AipFace(APP_ID, API_KEY, SECRET_KEY)
+    def __init__(self, face_choise = "Retina"):
+        self.face_init()
+        if(face_choice == "Retina"):
+            self.client = RetinaFace()
+        else:
+            self.client = self._aip
 
     """
     人脸检测
@@ -35,13 +27,18 @@ class FaceRCN():
     def face_detect(self, img_rgb, face_field="beauty,quality"):
 
         img64 = to_base64(img_rgb)
+        self.client = self._aip
         det_options["face_field"] = face_field
+
         face_result = self.client.detect(img64, image_type, det_options)
 
         if face_result["error_msg"] == "SUCCESS":
             return face_result["result"]["face_list"][0]
         else:
             return None
+
+    def face_init(self):
+        self._aip = AipFace(*face_config)
 
     """
     人脸注册
@@ -84,12 +81,13 @@ class FaceRCN():
         if admission:
             # 裁剪人脸
             face_cropped = crop_face(img_rgb, face_list, admission=admission)
+            self.client = self._aip
 
             # 注册选项：1. 用户备注 2. 注册模式为附加
             register_options["user_info"] = user_info
             register_options["action_type"] = mode
 
-            # 带参数调用API进行人脸注册
+            # 带参数进行人脸注册
             face_result = self.client.addUser(face_cropped, image_type, group_id, user_id, register_options)
 
             if face_result["error_msg"] == "SUCCESS":
@@ -118,7 +116,8 @@ class FaceRCN():
     def face_search(self, img_rgb, group_id):     
 
         img64 = to_base64(img_rgb)
-        # 调API在人脸库进行搜索
+        self.client = self._aip
+        # 在人脸库进行搜索
         face_result =  self.client.search(img64, image_type, group_id)
 
         if face_result["error_msg"] == "SUCCESS":
