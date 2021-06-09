@@ -153,7 +153,6 @@ if __name__ == "__main__":
 
     if mode == "predict":
         '''
-        predict.py有几个注意点
         1、无法进行批量预测，如果想要批量预测，可以利用os.listdir()遍历文件夹，利用cv2.imread打开图片文件进行预测。
         2、如果想要保存，利用cv2.imwrite("img.jpg", r_image)即可保存。
         3、如果想要获得框的坐标，可以进入detect_image函数，读取(b[0], b[1]), (b[2], b[3])这四个值。
