@@ -1,8 +1,8 @@
 import torch.nn as nn
 from torch.nn import functional as F
 
-from nets.inception_resnetv1 import InceptionResnetV1
-from nets.mobilenet import MobileNetV1
+from first.Face_RCN.nets.inception_resnetv1 import InceptionResnetV1
+from first.Face_RCN.nets.mobilenet import MobileNetV1
 
 
 class mobilenet(nn.Module):

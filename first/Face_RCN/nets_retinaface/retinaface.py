@@ -4,8 +4,8 @@ import torch.nn.functional as F
 import torchvision.models._utils as _utils
 from torchvision import models
 
-from nets_retinaface.layers import FPN, SSH
-from nets_retinaface.mobilenet025 import MobileNetV1
+from first.Face_RCN.nets_retinaface.layers import FPN, SSH
+from first.Face_RCN.nets_retinaface.mobilenet025 import MobileNetV1
 
 
 class ClassHead(nn.Module):

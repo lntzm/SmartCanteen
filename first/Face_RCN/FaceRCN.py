@@ -1,17 +1,17 @@
 import cv2
 import numpy as np
-from retinaface import RetinaFace
+from first.Face_RCN.retinaface import Retinaface
 from aip import AipFace
 
 import time
-from .face_utils import *
+from first.Face_RCN.face_utils import *
 
 class FaceRCN():
 
     def __init__(self, face_choice = "Retina"):
         self.face_init()
         if(face_choice == "Retina"):
-            self.client = RetinaFace()
+            self.client = Retinaface()
         else:
             self.client = self._aip
 
@@ -122,7 +122,8 @@ class FaceRCN():
         face_result =  self.client.search(img64, image_type, group_id)
 
         if face_result["error_msg"] == "SUCCESS":
-            return face_result["result"]["user_list"][0]
+            user_id = face_result["result"]["user_list"][0]
+            return user_dict[user_id]
         else:
             # 没有这个用户 建议赶紧注册！(o°ω°o)
             return None
