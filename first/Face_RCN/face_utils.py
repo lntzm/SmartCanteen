@@ -2,11 +2,6 @@ import cv2
 import numpy as np
 import base64
 
-"""
-#################################################
-人脸API调用的相关参数设置
-"""
-
 """人脸检测部分"""
 det_options = {}
 det_options["face_field"] = "beauty,quality"    # 返回颜值 人脸质量
@@ -23,16 +18,27 @@ register_options["action_type"] = "APPEND"          # 已注册 则在该用户�
 
 """人脸搜索部分"""
 search_options = {}
+search_options["match_threshold"] = 90              # 默认80 最大100
+
+user_dict = {
+    "ydj": "杨东杰",
+    "xbc": "许柏城",
+    "lzh": "刘知航",
+    "qxy": "钱双熠",
+    "wtq": "吴天琪"
+}
 
 """
 #################################################
 人脸搜索相关函数
 """
+ID = '23931013'
+KEY = 'ztwX2ncIovCAKfSPcdfoxdEj'
+S_KEY = 'vfrRf1qdrwPq2oUpOg0DzNRmAp79mUDF'
+face_config = (ID, KEY, S_KEY)
+image_type = "BASE64"
 
-"""
-图片转base64类型模块
-*转换为base64类型 才能上传到百度云API*
-"""
+
 def to_base64(img):
     ret, buf = cv2.imencode(".jpg", img)   # numpy图片转二进制
     img64 = base64.b64encode(buf)
