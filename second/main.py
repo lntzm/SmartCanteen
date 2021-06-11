@@ -18,15 +18,18 @@ class RecgProcess(Process):
 
     def loadObject(self, db, wechatSubscribe):
         self.db = db
-        hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=153430, ratio=424.79)
-        hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=1451, ratio=430.58)
-        hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=74428, ratio=432.34)
-        self.hxs = [hx1, hx2, hx3]
-        self.plates = [Plate(), Plate(), Plate()]
-        self.got_weight = np.array([False, False, False])
-        self.id_found = np.array([False, False, False])
+        hx1 = HX711(dout_pin=26, pd_sck_pin=19, offset=1451, ratio=430.58)
+        hx2 = HX711(dout_pin=6, pd_sck_pin=5, offset=74428, ratio=432.34)
+        self.hxs = [hx1, hx2]
+        self.plates = [Plate(), Plate()]
+        self.got_weight = np.array([False, False])
+        self.id_found = np.array([False, False])
         self.max_num_plates = len(self.hxs)
         self.wechatSubs = wechatSubscribe
+        self.QRCodeDetector = cv2.wechat_qrcode_WeChatQRCode("./wechatQRCode/detect.prototxt",
+                                                             "./wechatQRCode/detect.caffemodel",
+                                                             "./wechatQRCode/sr.prototxt",
+                                                             "./wechatQRCode/sr.caffemodel")
 
     def run(self) -> None:
         while True:
@@ -36,13 +39,14 @@ class RecgProcess(Process):
                     print("> 请拿走餐盘")
                     continue
                 else:  # 全部拿走了，开始下一轮识别
-                    self.id_found = np.array([False, False, False])
+                    self.id_found = np.array([False, False])
                     self.end_flag = False
 
-            self.start_enable = self.checkAnyWeight()  # 新一轮，检测到重量开始识别
             if not self.start_enable:
+                self.start_enable = self.checkAnyWeight()  # 新一轮，检测到重量开始识别
                 continue
 
+            print("> 开始检测")
             for hx, plate in zip(self.hxs, self.plates):
                 plate.getWeight(hx)
             self.got_weight = (np.array([
@@ -51,19 +55,20 @@ class RecgProcess(Process):
                 print("> 压力传感器未检测到餐盘")
                 continue
 
-            images, locs = splitImg(frame)
-            if not images:
-                print("> 未检测到餐盘图像")
+            # images, locs = splitImg(frame)
+            codes, locs = self.QRCodeDetector.detectAndDecode(frame)
+            print(codes)
+            if not codes:
+                print("  > 未找到二维码")
                 continue
-            if len(images) != np.count_nonzero(self.got_weight):
-                print(f"> 压力传感器检测餐盘个数({np.count_nonzero(self.got_weight)})"
-                      f"与餐盘图像个数({len(images)})不符")
+            if len(codes) != np.count_nonzero(self.got_weight):
+                print(f"> 重量检测餐盘个数({np.count_nonzero(self.got_weight)})"
+                      f"检测到的二维码个数({len(codes)})不符")
                 continue
 
-            sync_imgs = sortImgByHX711(images, locs, self.got_weight)
-            print(f"压力传感器与摄像头均发现了{len(images)}个餐盘")
+            sync_codes = self.sortQRCodes(codes, locs)
+            print(f"压力传感器与摄像头均发现了{len(codes)}个餐盘")
 
-            id_found = False
             info_found = False
             for i in range(self.max_num_plates):
                 if not self.got_weight[i]:
@@ -72,12 +77,7 @@ class RecgProcess(Process):
                 if self.id_found[i]:
                     print(f"[debug] 压力传感器{i}对应餐盘已识别")
                     continue
-                # img_b64 = CVEncodeb64(sync_imgs[i])
-                print("> 开始识别餐盘id")
-                id_found = self.plates[i].getID(sync_imgs[i])
-                if not id_found:
-                    print("  > 未发现餐盘id")
-                    break
+                plate.id = sync_codes[i]
                 print(f"  > 餐盘id: {plate.id}")
 
                 info_found = plate.getInfoBefore(self.db)
@@ -88,7 +88,7 @@ class RecgProcess(Process):
                 self.id_found[i] = True
                 plate.updateInfo(self.db)
 
-            if not id_found or not info_found:
+            if not info_found:
                 continue
 
             print("> 识别完成")
@@ -104,6 +104,18 @@ class RecgProcess(Process):
         if np.all(got_weight == False):  # 全都未检测到重量
             return False
         return True
+
+    def sortQRCodes(self, codes, locs):
+        sync_codes = [None, None]
+        locs_x = np.array(locs)[:, 0, 0]
+        codes = np.array(codes, dtype=str)[locs_x.argsort()[::-1]].tolist()
+        index = 0
+        for i in range(self.got_weight.size):
+            if not self.got_weight[i]:
+                continue
+            sync_codes[i] = codes[index]
+            index += 1
+        return sync_codes
 
 
 class CapProcess(Process):

@@ -30,11 +30,12 @@ class WechatSubscribe:
               f"message/subscribe/send?access_token={access_token}"
         # key是模板的字段名称，value是字段对应的值
         # e.g. data = {"name3": {"value": "红烧茄子鸡肉"}, "amount5": {"value": "5"}}
-        data = {"name3": {"value": buying}, "amount5": {"value": price}}
+        data = {"amount3": {"value": price}, "thing1": {"value": buying}}
+        # data = {"name3": {"value": buying}, "amount5": {"value": price}}
 
         post_data = {
             "touser": "ogsmF4n85zcKIRRKPqiWG6KmusDI",  # 微信用户的open_id
-            "template_id": "4HskV0UGpaaPqojLHWqCl3m-8Ktvy6nPLVIv3MQoG2M",  # 订阅消息模板id
+            "template_id": "O9oo_L0ID37aV0MXYbct3F3HwrygCJXta2THrbnQUes",  # 订阅消息模板id
             "data": data,  # 模板字段及其对应的字段，注意字段类型
             "page": "pages/mine/mine",  # 需要跳转的路径（前端提供）
         }

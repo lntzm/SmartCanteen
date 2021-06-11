@@ -68,3 +68,4 @@ def sortImgByHX711(images, locs, got_weight):
         index += 1
     return sync_images
 
+

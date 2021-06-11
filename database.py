@@ -85,11 +85,11 @@ class Database:
 
     def updatePlate(self, dish_id: str, change: dict):
         condition = {'plate_id': dish_id}
-        self.dishes_db.update_one(condition, {'$set': change})
+        self.plates_db.update_one(condition, {'$set': change})
 
     def updateNoEatenPlate(self, dish_id: str, change: dict):
         condition = {'plate_id': dish_id, 'eaten': False}
-        self.dishes_db.update_one(condition, {'$set': change})
+        self.plates_db.update_one(condition, {'$set': change})
 
     def pushUpdateNoEatenPlate(self, dish_id: str, change: dict):
         self.db_cloud.updateNoEatenPlate(dish_id, change)
