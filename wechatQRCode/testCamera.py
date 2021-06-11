@@ -1,6 +1,8 @@
 import cv2
 import time
-
+from ImageHandle import splitImg
+from ImageHandle import CVEncodeb64
+from baiduAPI import BaiduAPI
 
 # from ImageHandle import *
 # def QRcode(img):
@@ -12,6 +14,7 @@ import time
 cap = cv2.VideoCapture(2)
 count = 0
 start = 0
+baiduAPI = BaiduAPI()
 while True:
 
     ret, frame = cap.read()
@@ -20,12 +23,25 @@ while True:
         continue
     # cv2.imwrite("test.jpg", frame)
 
-    if count % 2:
-        start = time.time()
-    else:
-        print(time.time()-start)
-    cv2.imshow('client', frame)
-    count += 1
+    # if count % 2:
+    #     start = time.time()
+    # else:
+    #     print(time.time()-start)
+
+
+
+    imgs,_ = splitImg(frame)
+    img = imgs[0]
+
+    name, prob, _ = baiduAPI.getDishResult(CVEncodeb64(img))
+    print(name, prob)
+    cv2.imwrite("米饭4.jpg", img)
+    break
+
+
+
+    # cv2.imshow('client', frame)
+    # count += 1
 
     # images, img_marked = splitImg(frame)
     # if not images:
