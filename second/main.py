@@ -63,6 +63,8 @@ class RecgProcess(Process):
             sync_imgs = sortImgByHX711(images, locs, self.got_weight)
             print(f"压力传感器与摄像头均发现了{len(images)}个餐盘")
 
+            id_found = False
+            info_found = False
             for i in range(self.max_num_plates):
                 if not self.got_weight[i]:
                     continue
@@ -78,19 +80,19 @@ class RecgProcess(Process):
                     break
                 print(f"  > 餐盘id: {plate.id}")
 
-                # info_found = plate.getInfoBefore(self.db)
-                # if not info_found:
-                #     print("> 该餐盘未经历菜品购买阶段！请先购买菜品")
-                #     break
+                info_found = plate.getInfoBefore(self.db)
+                if not info_found:
+                    print("> 该餐盘未经历菜品购买阶段！请先购买菜品")
+                    break
 
                 self.id_found[i] = True
-                # plate.updateInfo(self.db)
+                plate.updateInfo(self.db)
 
-            if not id_found: # or not info_found:
+            if not id_found or not info_found:
                 continue
 
             print("> 识别完成")
-            # self.wechatSubs.sendMsg("本次用餐结束", "快来看看您的本餐情况吧")
+            self.wechatSubs.sendMsg("本次用餐结束", "快来看看您的本餐情况吧")
             self.end_flag = True
 
     def checkAnyWeight(self):
@@ -160,4 +162,3 @@ if __name__ == '__main__':
     finally:
         GPIO.cleanup()
         cap.release()
-        print("end")

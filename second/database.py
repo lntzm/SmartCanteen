@@ -104,13 +104,16 @@ class Database:
         return self.record.find()
 
     def mergeUserRecord(self, user: dict):
-        self.plates_db.update_many({}, {'$set': user})
+        self.record.update_many({}, {'$set': user})
 
     def commitRecord(self):
         self.plates_db.insert(self.record.find())
 
     def pushRecord(self):
         records = list(self.record.find())
+        for record in records:
+            record['_id'] = str(record['_id'])
+            record['eaten'] = str(record['eaten'])
         self.db_cloud.addPlate(records)
 
     def syncDish(self):
@@ -138,41 +141,49 @@ class DBCloud:
         return result['access_token']
 
     def addUser(self, info: dict or list):
-        query = "db.collection('users').add({data:" + str(info) + "})"
+        accessToken = self.get_access_token()
+        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
+        query = "db.collection('user').add({data:" + str(info) + "})"
         data = {
             "env": self.ENV,  # 云环境ID
             "query": query
         }
-        response = requests.post(self.url, data=json.dumps(data))  # 用来观察数据增加是否成功
+        response = requests.post(url, data=json.dumps(data))  # 用来观察数据增加是否成功
         if json.loads(response.text)['errcode'] != 0:  # 增加失败
             return False
         return True
 
     def addDish(self, info: dict or list):
-        query = "db.collection('dishes').add({data:" + str(info) + "})"
+        accessToken = self.get_access_token()
+        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
+        query = "db.collection('dish').add({data:" + str(info) + "})"
         data = {
             "env": self.ENV,  # 云环境ID
             "query": query
         }
-        response = requests.post(self.url, data=json.dumps(data))
+        response = requests.post(url, data=json.dumps(data))
         if json.loads(response.text)['errcode'] != 0:  # 增加失败
             return False
         return True
 
     def addPlate(self, info: dict or list):
-        query = "db.collection('plates').add({data:" + str(info) + "})"
+        accessToken = self.get_access_token()
+        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
+        query = "db.collection('plate').add({data:" + str(info) + "})"
         data = {
             "env": self.ENV,  # 云环境ID
             "query": query
         }
-        response = requests.post(self.url, data=json.dumps(data))
+        response = requests.post(url, data=json.dumps(data))
         if json.loads(response.text)['errcode'] != 0:  # 增加失败
             return False
         return True
 
     def updateUser(self, name: str, change: dict):
+        accessToken = self.get_access_token()
+        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
-        collection = "db.collection('users').where({_id:"
+        collection = "db.collection('user').where({_id:"
         text = "}).update({data:"
         query = collection + name_str + text + str(change) + "})"
         # print(query)
@@ -180,14 +191,16 @@ class DBCloud:
             "env": self.ENV,
             "query": query
         }
-        response = requests.post(self.url, data=json.dumps(data))
+        response = requests.post(url, data=json.dumps(data))
         if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
 
     def updatePlate(self, name: str, change: dict):
+        accessToken = self.get_access_token()
+        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
-        collection = "db.collection('plates').where({plate_id:"
+        collection = "db.collection('plate').where({plate_id:"
         text = "}).update({data:"
         query = collection + name_str + text + str(change) + "})"
         # print(query)
@@ -195,28 +208,32 @@ class DBCloud:
             "env": self.ENV,
             "query": query
         }
-        response = requests.post(self.url, data=json.dumps(data))
+        response = requests.post(url, data=json.dumps(data))
         if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
 
     def updateNoEatenPlate(self, name: str, change: dict):
+        accessToken = self.get_access_token()
+        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
-        query = "db.collection('plates').where({plate_id:{0}, eaten: False}).update({data:{1}})".format(name_str,
+        query = "db.collection('plate').where({plate_id:{0}, eaten: False}).update({data:{1}})".format(name_str,
                                                                                                         str(change))
         # print(query)
         data = {
             "env": self.ENV,
             "query": query
         }
-        response = requests.post(self.url, data=json.dumps(data))
+        response = requests.post(url, data=json.dumps(data))
         if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
 
     def updateDish(self, name: str, change: dict):
+        accessToken = self.get_access_token()
+        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
-        collection = "db.collection('dishes').where({_id:"
+        collection = "db.collection('dish').where({_id:"
         text = "}).update({data:"
         query = collection + name_str + text + str(change) + "})"
         # print(query)
@@ -224,7 +241,7 @@ class DBCloud:
             "env": self.ENV,
             "query": query
         }
-        response = requests.post(self.url, data=json.dumps(data))
+        response = requests.post(url, data=json.dumps(data))
         if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
@@ -232,5 +249,5 @@ class DBCloud:
 
 if __name__ == '__main__':
     db = Database("mongodb://localhost:27017/", "SmartCanteen")
-
+    db.pushRecord()
     pass
