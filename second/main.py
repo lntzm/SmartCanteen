@@ -18,12 +18,13 @@ class RecgProcess(Process):
 
     def loadObject(self, db, wechatSubscribe):
         self.db = db
-        hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=68753, ratio=433.21)
-        hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=-1660, ratio=430.05)
-        hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=177856, ratio=424.71)
+        hx1 = HX711(dout_pin=21, pd_sck_pin=20, offset=153430, ratio=424.79)
+        hx2 = HX711(dout_pin=26, pd_sck_pin=19, offset=1451, ratio=430.58)
+        hx3 = HX711(dout_pin=6, pd_sck_pin=5, offset=74428, ratio=432.34)
         self.hxs = [hx1, hx2, hx3]
         self.plates = [Plate(), Plate(), Plate()]
         self.got_weight = np.array([False, False, False])
+        self.id_found = np.array([False, False, False])
         self.max_num_plates = len(self.hxs)
         self.wechatSubs = wechatSubscribe
 
@@ -35,6 +36,7 @@ class RecgProcess(Process):
                     print("> 请拿走餐盘")
                     continue
                 else:  # 全部拿走了，开始下一轮识别
+                    self.id_found = np.array([False, False, False])
                     self.end_flag = False
 
             self.start_enable = self.checkAnyWeight()  # 新一轮，检测到重量开始识别
@@ -65,6 +67,9 @@ class RecgProcess(Process):
                 if not self.got_weight[i]:
                     continue
                 plate = self.plates[i]
+                if self.id_found[i]:
+                    print(f"[debug] 压力传感器{i}对应餐盘已识别")
+                    continue
                 # img_b64 = CVEncodeb64(sync_imgs[i])
                 print("> 开始识别餐盘id")
                 id_found = self.plates[i].getID(sync_imgs[i])
@@ -73,25 +78,28 @@ class RecgProcess(Process):
                     break
                 print(f"  > 餐盘id: {plate.id}")
 
-                info_found = plate.getInfoBefore(self.db)
-                if not info_found:
-                    print("> 该餐盘未经历菜品购买阶段！请先购买菜品")
-                    break
+                # info_found = plate.getInfoBefore(self.db)
+                # if not info_found:
+                #     print("> 该餐盘未经历菜品购买阶段！请先购买菜品")
+                #     break
 
-                plate.updateInfo(self.db)
+                self.id_found[i] = True
+                # plate.updateInfo(self.db)
+
+            if not id_found: # or not info_found:
+                continue
 
             print("> 识别完成")
-            self.wechatSubs.sendMsg("本次用餐结束", "快来看看您的本餐情况吧")
+            # self.wechatSubs.sendMsg("本次用餐结束", "快来看看您的本餐情况吧")
             self.end_flag = True
 
     def checkAnyWeight(self):
         weights = []
         for hx in self.hxs:
             weights.append(hx.get_weight_mean(5))
-
+        print(weights)
         got_weight = (np.array(weights) > -10)
         if np.all(got_weight == False):  # 全都未检测到重量
-            print("> 无重量")
             return False
         return True
 
@@ -117,6 +125,7 @@ class CapProcess(Process):
                 print(f'[debug] No camera with device_id {self.camera_id}')
                 continue
             frame_count += 1
+            # cv2.imshow("client", frame)
 
             if frame_count == self.recg_freq:
                 self.img_queue.put(frame)
@@ -151,3 +160,4 @@ if __name__ == '__main__':
     finally:
         GPIO.cleanup()
         cap.release()
+        print("end")

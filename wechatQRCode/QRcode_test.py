@@ -1,29 +1,40 @@
 import cv2
 from ImageHandle import *
-from baiduAPI import BaiduAPI
+# from baiduAPI import BaiduAPI
 from PIL import Image, ImageEnhance
+import numpy
 import time
 
 
 def QRcode(img):
-    detector = cv2.wechat_qrcode_WeChatQRCode("./wechatQRCode/detect.prototxt",
-                                              "./wechatQRCode/detect.caffemodel",
-                                              "./wechatQRCode/sr.prototxt",
-                                              "./wechatQRCode/sr.caffemodel")
+    # 微信
+    detector = cv2.wechat_qrcode_WeChatQRCode("./detect.prototxt",
+                                              "./detect.caffemodel",
+                                              "./sr.prototxt",
+                                              "./sr.caffemodel")
     # 识别结果和位置
     res, points = detector.detectAndDecode(img)
     return res
+
+
+# def QRcode(img):
+#     # 百度API识别
+#     image_buffer = CVEncodeb64(image)
+#     result = baiduAPI.getNumberResult(image_buffer)
+#     return result
 
 
 def bright_enhance(img):
     for b in range(5):
         bright_enhancer = ImageEnhance.Brightness(img)
         bright_img_up = bright_enhancer.enhance(1 - 0.05 * j)
+        bright_img_up = cv2.cvtColor(numpy.asarray(bright_img_up), cv2.COLOR_RGB2BGR)
         temp = QRcode(bright_img_up)
         if temp:
             return temp
 
         bright_img_down = bright_enhancer.enhance(1 + 0.05 * j)
+        bright_img_down = cv2.cvtColor(numpy.asarray(bright_img_down), cv2.COLOR_RGB2BGR)
         temp = QRcode(bright_img_down)
         if temp:
             return temp
@@ -34,10 +45,12 @@ def contrast_enhance(img):
     for c in range(5):
         contrast_enhancer = ImageEnhance.Contrast(img)
         contrast_img_up = contrast_enhancer.enhance(1 - 0.05 * j)
+        contrast_img_up = cv2.cvtColor(numpy.asarray(contrast_img_up), cv2.COLOR_RGB2BGR)
         temp = QRcode(contrast_img_up)
         if temp:
             return temp
         contrast_img_down = contrast_enhancer.enhance(1 + 0.05 * j)
+        contrast_img_down = cv2.cvtColor(numpy.asarray(contrast_img_down), cv2.COLOR_RGB2BGR)
         temp = QRcode(contrast_img_down)
         if temp:
             return temp
@@ -57,11 +70,15 @@ def sort_image(images, locs):
 
 
 if __name__ == '__main__':
-    cap = cv2.VideoCapture(1)
-    baiduAPI = BaiduAPI()
-    # index = [False, False, False]
-    result = [None, None, None]
-    # result = ['', '', '']
+    cap = cv2.VideoCapture(0)
+    detector = cv2.wechat_qrcode_WeChatQRCode("./detect.prototxt",
+                                              "./detect.caffemodel",
+                                              "./sr.prototxt",
+                                              "./sr.caffemodel")
+
+    index = [False, False, False]
+    # result = [None, None, None]
+    result = ['', '', '']
     count = 0
     fail = 0
     bright = 0
@@ -72,7 +89,7 @@ if __name__ == '__main__':
             print('No camera')
             continue
 
-        cv2.imshow('client', frame)
+        # cv2.imshow('client', frame)
         images, locs = splitImg(frame)
         images = sort_image(images, locs)
 
@@ -81,10 +98,10 @@ if __name__ == '__main__':
             continue
         print("分割到", len(images), "个区域")
 
-        for i, image in enumerate(images):
-            if result[i]:
-                continue
-            result[i] = QRcode(image)
+        # for i, image in enumerate(images):
+        #     if result[i]:
+        #         continue
+        #     result[i], _ = QRcode(image)
 
         for i, image in enumerate(images):
             # 微信识别
@@ -96,47 +113,31 @@ if __name__ == '__main__':
         if False in index and count != 10:
             continue
 
+        count = 0
         for j, image in enumerate(images):
             if index[j]:
                 print("> plate_ID:", result[j])
             else:
                 print(">  10times failed to recognize the picture", j)
                 img = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA))
-                bright_img = bright_enhance(img)
-                if bright_img:
+                bright_result = bright_enhance(img)
+
+                if bright_result:
                     bright += 1
                     print(">  bright_enhance success", bright)
 
-                    result[j] = bright_img
-                    contrast_img = contrast_enhance(img)
-                elif contrast_img:
+                    result[j] = bright_result
+
+                elif contrast_enhance(img):
                     contrast += 1
                     print(">  contrast_enhance success", contrast)
 
-                    result = contrast_img
+                    result[j] = contrast_enhance(img)
                 else:
                     print(">  the enhancement failed")
                     fail += 1
                     print(">  fail times:", fail)
 
-            # print(result[j])
-
-            # # 百度API识别
-            # image_buffer = CVEncodeb64(image)
-            # result = baiduAPI.getNumberResult(image_buffer)
-
-            # for i in range(10):
-            #     result = QRcode(image)
-            #     if (not result) and i != 9:
-            #         continue
-            #     elif i == 9:
-            #         print("<  fail to recognize plate_ID")
-            #     else:
-            #         print("<  plate_ID:", result)
-            #         break
-            # continue
-
-        # time.sleep(1)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 

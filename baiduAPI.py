@@ -9,6 +9,8 @@ from urllib.request import Request
 from urllib.error import URLError
 from urllib.parse import urlencode
 import ssl
+import requests
+import cv2
 
 
 class BaiduAPI:
@@ -17,8 +19,8 @@ class BaiduAPI:
         self.IMAGE_API_KEY = 'FPqEAsBw7BKAKyPaanpVo8rE'
         self.IMAGE_SECRET_KEY = 'pNPM0mZCQisyuXostxWX3QdFQZ2p3el8'
 
-        self.NUMBER_API_KEY = 'Ogq6rapwYUzn679qjM2BYIrG'
-        self.NUMBER_SECRET_KEY = 'SjXDBkNeiqI2nYeNDXe28nPZcyAVoEmj'
+        self.ID_API_KEY = 'Ogq6rapwYUzn679qjM2BYIrG'
+        self.ID_SECRET_KEY = 'SjXDBkNeiqI2nYeNDXe28nPZcyAVoEmj'
 
         self.DISH_URL = "https://aip.baidubce.com/rest/2.0/image-classify/v2/dish"
         self.QRCODE_URL = "https://aip.baidubce.com/rest/2.0/ocr/v1/qrcode"
@@ -88,7 +90,7 @@ class BaiduAPI:
         """
             调用数字识别接口并获得结果
         """
-        access_token = self.fetchToken(self.NUMBER_API_KEY, self.NUMBER_SECRET_KEY)
+        access_token = self.fetchToken(self.ID_API_KEY, self.ID_SECRET_KEY)
         request_url = self.NUMBER_URL + "?access_token=" + access_token
         params = {'image': image}
         data = urlencode(params).encode('utf-8')
@@ -106,27 +108,50 @@ class BaiduAPI:
         else:
             return None
 
+    def getQRCodeResult(self, image):
+        access_token = self.fetchToken(self.ID_API_KEY, self.ID_SECRET_KEY)
+        request_url = self.QRCODE_URL + "?access_token=" + access_token
+        params = {'image': image}
+        # data = urlencode(params).encode('utf-8')
+        headers = {'content-type': 'application/x-www-form-urlencoded'}
+        response = requests.post(request_url, data=params, headers=headers)
+        result = response.json()
+        if 'error_code' in result.keys():
+            print("[ERROR] in BaiduAPI.getQRCodeResult(): ", result['error_msg'])
+            return None
+
+        if result['codes_result_num'] == 1:
+            return result['codes_result'][0]['text'][0]
+        else:
+            print(f"[ERROR] in BaiduAPI.getQRCodeResult(): get {result['codes_result_num']} results")
+            return None
+
 
 if __name__ == '__main__':
-    file_path = '/home/lzh/Desktop/temp'
+    # file_path = '/home/lzh/Desktop/temp'
     baiduAI = BaiduAPI()
-
-    # 检查文件是否存在
-    if not os.path.exists(file_path):
-        raise FileNotFoundError("{} not exist".format(file_path))
-    try:
-        images = os.listdir(file_path)
-    except NotADirectoryError:
-        images = [os.path.basename(file_path)]
-        file_path = os.path.dirname(file_path)
-
-    for image in images:
-        # 获取图片
-        with open(os.path.join(file_path, image), 'rb')as f:
-            print('{}'.format(image))
-            image = base64.b64encode(f.read())
-        # print("> start recognizing {}".format(image))
-        name, prob, calorie = baiduAI.getDishResult(image)
-        print(u"  name: {}, probability: {}, calorie: {} Cal/100g"
-              .format(name, prob, calorie))
-        time.sleep(0.5)
+    #
+    # # 检查文件是否存在
+    # if not os.path.exists(file_path):
+    #     raise FileNotFoundError("{} not exist".format(file_path))
+    # try:
+    #     images = os.listdir(file_path)
+    # except NotADirectoryError:
+    #     images = [os.path.basename(file_path)]
+    #     file_path = os.path.dirname(file_path)
+    #
+    # for image in images:
+    #     # 获取图片
+    #     with open(os.path.join(file_path, image), 'rb')as f:
+    #         print('{}'.format(image))
+    #         image = base64.b64encode(f.read())
+    #     # print("> start recognizing {}".format(image))
+    #     name, prob, calorie = baiduAI.getDishResult(image)
+    #     print(u"  name: {}, probability: {}, calorie: {} Cal/100g"
+    #           .format(name, prob, calorie))
+    #     time.sleep(0.5)
+    img = cv2.imread('./test.png')
+    encoded, buffer = cv2.imencode('.jpg', img)
+    img = base64.b64encode(buffer)
+    result = baiduAI.getQRCodeResult(img)
+    pass
