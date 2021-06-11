@@ -14,6 +14,13 @@ from wechatSubscribe import WechatSubscribe
 import time
 import cv2
 
+users = {
+    "杨东杰": "ogsmF4hWXfUpG1I6-54mqaPYppbY",
+    "许柏城": "ogsmF4jAaF30ufoX2euqBp8UrU-4",
+    "刘知航": "ogsmF4hflJJFVuEq7B-LuuJCq_Bg",
+    "钱双熠": "ogsmF4qVGBRAMdl-5ZfLHcHqIQA8",
+    "吴天琪": "ogsmF4n85zcKIRRKPqiWG6KmusDI"
+}
 
 class Main_app(QMainWindow, Ui_MainWindow):
 
@@ -139,7 +146,7 @@ class Main_app(QMainWindow, Ui_MainWindow):
         self.total_price_label.setText(str(self.total_cost) + " 元")
 
         # 发送微信小程序订阅消息
-        self.wechatSubs.sendMsg(names[1:], str(self.total_cost) + " 元")
+        self.wechatSubs.sendMsg(users[self.face_thread.user.id], names[1:], str(self.total_cost) + " 元")
 
     """前端关闭 事件处理"""
 
