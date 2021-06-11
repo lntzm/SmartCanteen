@@ -48,14 +48,14 @@ class Plate:
         将所有信息汇总成一个字典
         :return: 字典类型，所有成员变量
         """
-        self.end_time = datetime.now().strftime('%Y-%m-%d %H:%M')
-        start_time = datetime.strptime(self.__db_info['start_time'], '%Y-%m-%d %H:%M')
-        self.meal_time = start_time - datetime.strptime(self.end_time, '%Y-%m-%d %H:%M')
+        self.end_time = datetime.now().strftime('%H:%M')
+        start_time = datetime.strptime(self.__db_info['start_time'], '%H:%M')
+        self.meal_time = datetime.strptime(self.end_time, '%H:%M') - start_time
         plate = {
             "eaten": self.eaten,
             "rest_weight": self.rest_weight,
             "finish_time": self.end_time,
-            "meal_time": self.meal_time
+            "meal_time": str(self.meal_time)
         }
         db.updateNoEatenPlate(self.__db_info['plate_id'], plate)
         db.pushUpdateNoEatenPlate(self.__db_info['plate_id'], plate)
