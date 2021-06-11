@@ -9,7 +9,7 @@ import time
 #     res, points = detector.detectAndDecode(img)
 #     return res
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 count = 0
 start = 0
 while True:

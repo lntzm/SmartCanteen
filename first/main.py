@@ -130,7 +130,7 @@ class Main_app(QMainWindow, Ui_MainWindow):
             plate_name = plate["dish_name"]
             plate_price = plate["price"]
 
-            names += "，" + str(plate_name)
+            names += " " + str(plate_name)
             self.total_cost += plate_price
             self.show_str += "盘子" + str(plate_id) + " " + str(plate_name) + " 单价: "
             self.show_str += str(plate_price) + " 元" + "\n"
@@ -139,7 +139,7 @@ class Main_app(QMainWindow, Ui_MainWindow):
         self.total_price_label.setText(str(self.total_cost) + " 元")
 
         # 发送微信小程序订阅消息
-        self.wechatSubs.sendMsg(names, str(self.total_cost) + " 元")
+        self.wechatSubs.sendMsg(names[1:], str(self.total_cost))
 
     """前端关闭 事件处理"""
 
