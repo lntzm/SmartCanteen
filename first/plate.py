@@ -34,7 +34,7 @@ class Plate:
             8: "红烧茄子",
             9: "炒花菜",
             10: "凉拌海带丝",
-            11: "豆角炒肉"
+            11: "炒豆角"
         }
         self.QRCodeDetector = cv2.wechat_qrcode_WeChatQRCode("./wechatQRCode/detect.prototxt",
                                                              "./wechatQRCode/detect.caffemodel",

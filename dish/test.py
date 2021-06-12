@@ -18,7 +18,7 @@ dish_dict = {
             8: "红烧茄子",
             9: "炒花菜",
             10: "凉拌海带丝",
-            11: "豆角炒肉"
+            11: "炒豆角"
         }
 
 
@@ -36,7 +36,7 @@ def predict(model, transform, img_path):
 
 
 if __name__ == '__main__':
-    test_root = './dish/data/test'
+    test_root = './dish/test'
     device = torch.device("cuda:0")
     model = torch.load('./dish/model/model.pkl')
     # model.to(device)

@@ -20,9 +20,8 @@ dish_dict = {
             8: "红烧茄子",
             9: "炒花菜",
             10: "凉拌海带丝",
-            11: "豆角炒肉"
+            11: "炒豆角"
         }
-
 
 def predict(model, transform, image):
     model.eval()
