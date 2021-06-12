@@ -18,7 +18,7 @@ class WechatSubscribe:
         access_token = res.get("access_token", None)
         return access_token
 
-    def sendMsg(self, buying: str, price: str):
+    def sendMsg(self, user: str, buying: str, price: str):
         """
         发送订阅消息
         :param
@@ -34,7 +34,7 @@ class WechatSubscribe:
         # data = {"name3": {"value": buying}, "amount5": {"value": price}}
 
         post_data = {
-            "touser": "ogsmF4n85zcKIRRKPqiWG6KmusDI",  # 微信用户的open_id
+            "touser": user,  # 微信用户的open_id
             "template_id": "O9oo_L0ID37aV0MXYbct3F3HwrygCJXta2THrbnQUes",  # 订阅消息模板id
             "data": data,  # 模板字段及其对应的字段，注意字段类型
             "page": "pages/mine/mine",  # 需要跳转的路径（前端提供）
@@ -51,8 +51,8 @@ class WechatSubscribe:
         return False
 
 
-if __name__ == '__main__':
-    ws = WechatSubscribe()
-    name = " 红烧肉 蒸鲈鱼 土豆丝"
-    test = "14"
-    ws.sendMsg(name, test)
+# if __name__ == '__main__':
+#     ws = WechatSubscribe()
+#     name = " 红烧肉 蒸鲈鱼 土豆丝"
+#     test = "14"
+#     ws.sendMsg(name, test)
