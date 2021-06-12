@@ -54,7 +54,7 @@ if __name__ == '__main__':
             if not img_name.endswith('.jpg'):
                 continue
             img_path = os.path.join(class_path, img_name)
-            # rotateImage(img_path)
-        #     adjustBrightColorContrastSharp(img_path)
+            rotateImage(img_path)
+            adjustBrightColorContrastSharp(img_path)
         # adjustDistortion(class_path)
 

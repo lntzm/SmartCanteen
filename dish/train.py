@@ -191,7 +191,7 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(val_dataset, batch_size=8, num_workers=4)
 
     device = torch.device("cuda:0")
-    model = my_resnet18(num_classes=10)
+    model = my_resnet18(num_classes=12)
     model.to(device)
 
     model = train_model(num_epochs=5)

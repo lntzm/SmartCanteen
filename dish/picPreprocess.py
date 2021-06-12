@@ -81,6 +81,6 @@ if __name__ == '__main__':
         for i, img_name in enumerate(os.listdir(class_path)):
             img_path = os.path.join(class_path, img_name)
             # png2jpg(img_path)
-            # checkImage(img_path)
+            checkImage(img_path)
             renameImage(class_name, class_path, img_name, i)
 

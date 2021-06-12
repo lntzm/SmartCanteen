@@ -1,14 +1,29 @@
 import time
-
+import cv2
 import torch
 from torchvision import transforms
 from PIL import Image
 
 
+dish_dict = {
+            0: "土豆丝",
+            1: "红烧肉",
+            2: "米饭",
+            3: "清蒸鱼",
+            4: "油焖虾",
+            5: "炒青菜",
+            6: "番茄炒蛋",
+            7: "红烧鸡腿",
+            8: "红烧茄子",
+            9: "炒花菜",
+            10: "凉拌海带丝",
+            11: "豆角炒肉"
+        }
+
+
 def predict(model, transform, img_path):
     model.eval()
     # image = Image.open(img_path)
-    import cv2
     image = cv2.imread(img_path)
     image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     image = transform(image)
@@ -16,7 +31,7 @@ def predict(model, transform, img_path):
     image = image.to(torch.device("cuda:0"))
     output = model(image)
     _, prediction = torch.max(output, 1)
-    return prediction.tolist()[0]
+    return dish_dict[prediction.tolist()[0]]
 
 
 if __name__ == '__main__':
