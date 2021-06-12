@@ -33,7 +33,7 @@ def predict(model, transform, image):
     image = image.to(torch.device("cuda:0"))
     output = model(image)
     _, prediction = torch.max(output, 1)
-    return prediction.tolist()[0]
+    return dish_dict[prediction.tolist()[0]]
 
 
 if __name__ == '__main__':
@@ -52,14 +52,16 @@ if __name__ == '__main__':
         if not ret:
             print('No camera')
             continue
+        cv2.imshow('frame', frame)
+        imgs,_ = splitImg(frame)
+        img = imgs[0]
         index = input("input index:")
         # cv2.imwrite("test.jpg", frame)
         # cv2.imshow('client', frame)
         start = time.time()
         prediction = predict(model, transform, frame)
-        print(prediction)
-        print(time.time() - start)
-
+        print(f"预测结果: {prediction}，用时{time.time() - start}")
+        cv2.imwrite('test'+index+'.jpg', img)
 
         # if count % 2:
         #     start = time.time()

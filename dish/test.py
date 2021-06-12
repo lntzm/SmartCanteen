@@ -1,3 +1,4 @@
+import os
 import time
 import cv2
 import torch
@@ -35,7 +36,7 @@ def predict(model, transform, img_path):
 
 
 if __name__ == '__main__':
-    img_path = './dish/data/7/7_0.jpg'
+    test_root = './dish/data/test'
     device = torch.device("cuda:0")
     model = torch.load('./dish/model/model.pkl')
     # model.to(device)
@@ -46,7 +47,7 @@ if __name__ == '__main__':
                              std=[0.5, 0.5, 0.5])
     ])
     start = time.time()
-    prediction = predict(model, transform, img_path)
-    print(prediction)
-    print(time.time() - start)
-
+    for img_name in os.listdir(test_root):
+        img_path = os.path.join(test_root, img_name)
+        prediction = predict(model, transform, img_path)
+        print(f"{img_name} 预测结果: {prediction}，用时{time.time() - start}")

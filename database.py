@@ -135,8 +135,6 @@ class DBCloud:
         self.APP_ID = 'wx0d22019eaad3050c'
         self.APP_SECRET = 'a16cb285fca4fc4f7c710df712cc4a56'
         self.ENV = 'mydatabase1-4glgbmlu103a6c74'  # 云环境ID
-        self.accessToken = self.get_access_token()
-        self.url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, self.accessToken)
 
     def get_access_token(self):
         url = '{0}cgi-bin/token?grant_type=client_credential&appid={1}&secret={2}'.format(self.WECHAT_URL, self.APP_ID,
@@ -186,9 +184,9 @@ class DBCloud:
 
     def updateUser(self, name: str, change: dict):
         accessToken = self.get_access_token()
-        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
+        url = '{0}tcb/databaseupdate?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
-        collection = "db.collection(\"testlist\").where({id:"
+        collection = "db.collection('testlist').where({id:"
         text = "}).update({data:"
         query = collection + name_str + text + str(change) + "})"
         print(query)
@@ -197,7 +195,6 @@ class DBCloud:
             "query": query
         }
         response = requests.post(url, data=json.dumps(data))
-        print(response.json())
         if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
