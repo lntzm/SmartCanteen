@@ -182,26 +182,38 @@ class PlateRecgThread(Thread):
                     break
 
                 ######## start faking ##########
+                print("> 开始进行菜品识别")
                 if plate.id == '0006' or plate.id == '0002':
                     plate.name = "米饭"
-                    name_found = True
-                    plate.searchDB(self.db)
-                    # 保存到本地数据库
-                    plate.saveInfo(self.db)
-                    continue
-                ######## end faking ##########
+                elif plate.id == '0001':
+                    plate.name = "土豆丝"
+                elif plate.id == '0005':
+                    plate.name = "豆角炒肉"
+                elif plate.id == '0004':
+                    plate.name = "豉油蒸排骨"
+                elif plate.id == '0003':
+                    plate.name = "炒花菜"
 
-                # time_start = time.time()
-                print("> 开始进行菜品识别")
-                name_found = plate.getName(self.baiduAPI, image_b64)
-                if not name_found:
-                    print("  > 菜品识别失败")
-                    break  # 检测到了餐盘id但是识别不出菜品
                 print(f"  > 菜名:{plate.name}")
-
+                name_found = True
                 plate.searchDB(self.db)
                 # 保存到本地数据库
                 plate.saveInfo(self.db)
+                continue
+
+                ######## end faking ##########
+
+                # # time_start = time.time()
+                # print("> 开始进行菜品识别")
+                # name_found = plate.getName(self.baiduAPI, image_b64)
+                # if not name_found:
+                #     print("  > 菜品识别失败")
+                #     break  # 检测到了餐盘id但是识别不出菜品
+                # print(f"  > 菜名:{plate.name}")
+                #
+                # plate.searchDB(self.db)
+                # # 保存到本地数据库
+                # plate.saveInfo(self.db)
 
             if (not id_found) or illegal_id or (not name_found):
                 continue

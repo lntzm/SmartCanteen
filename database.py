@@ -120,6 +120,11 @@ class Database:
         dishes = list(self.dishes_db.find())
         self.db_cloud.addDish(dishes)
 
+    def syncUser(self, id: str, change: dict):
+        print(id)
+        print(change)
+        self.db_cloud.updateUser(id, change)
+
     def cleanRecord(self):
         self.record.delete_many({})
 
@@ -183,15 +188,16 @@ class DBCloud:
         accessToken = self.get_access_token()
         url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
-        collection = "db.collection('user').where({_id:"
+        collection = "db.collection(\"testlist\").where({id:"
         text = "}).update({data:"
         query = collection + name_str + text + str(change) + "})"
-        # print(query)
+        print(query)
         data = {
             "env": self.ENV,
             "query": query
         }
         response = requests.post(url, data=json.dumps(data))
+        print(response.json())
         if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
@@ -217,8 +223,7 @@ class DBCloud:
         accessToken = self.get_access_token()
         url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
-        query = "db.collection('plate').where({plate_id:{0}, eaten: False}).update({data:{1}})".format(name_str,
-                                                                                                        str(change))
+        query = "db.collection('plate').where({plate_id:%s, eaten: False}).update({data:%s})"%(name_str, str(change))
         # print(query)
         data = {
             "env": self.ENV,

@@ -119,11 +119,11 @@ class FaceRCN():
         img64 = to_base64(img_rgb)
         self.client = self._aip
         # 在人脸库进行搜索
-        face_result =  self.client.search(img64, image_type, group_id)
+        face_result =  self.client.search(img64, image_type, group_id, search_options)
 
         if face_result["error_msg"] == "SUCCESS":
-            user_id = face_result["result"]["user_list"][0]
-            return user_dict[user_id]
+            face_user = face_result["result"]["user_list"][0]
+            return user_dict[face_user["user_id"]]
         else:
             # 没有这个用户 建议赶紧注册！(o°ω°o)
             return None

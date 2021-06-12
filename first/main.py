@@ -146,7 +146,7 @@ class Main_app(QMainWindow, Ui_MainWindow):
         self.total_price_label.setText(str(self.total_cost) + " 元")
 
         # 发送微信小程序订阅消息
-        self.wechatSubs.sendMsg(users[self.face_thread.user.id], names[1:], str(self.total_cost) + " 元")
+        self.wechatSubs.sendMsg(users[self.face_thread.user.id], names[1:], str(self.total_cost) + "元")
 
     """前端关闭 事件处理"""
 
@@ -158,13 +158,13 @@ class Main_app(QMainWindow, Ui_MainWindow):
 
         # 关闭菜品显示进程
         self.plate_recognize_proc.stop()
-        time.sleep(1)
+        time.sleep(0.3)
         self.plate_recognize_proc.terminate()
         self.plate_recognize_proc.join()
 
         # 关闭人脸检测进程
         self.face_search_proc.stop()
-        time.sleep(1)
+        time.sleep(0.3)
         self.face_search_proc.terminate()
         self.face_search_proc.join()
 
@@ -214,13 +214,13 @@ class Accept_face_thread(QThread):
         while True:
             if self.user_flag_queue.full():
                 print("face detected")
-                self.disp_plate_signal.emit()
                 no_id_count = 0
                 self.user_disp_flag = True
                 self.test_user = User()
 
                 _ = self.user_flag_queue.get()
                 self.user.id = self.id_buffer.get()
+                self.disp_plate_signal.emit()
                 self.disp_user_id_signal.emit()
 
                 # 替换的用户的图片
