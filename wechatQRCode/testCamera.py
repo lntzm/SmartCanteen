@@ -9,7 +9,7 @@ import time
 #     res, points = detector.detectAndDecode(img)
 #     return res
 
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 count = 0
 start = 0
 while True:
@@ -23,7 +23,7 @@ while True:
     if count % 2:
         start = time.time()
     else:
-        print(time.time()-start)
+        # print(time.time()-start)
     cv2.imshow('client', frame)
     count += 1
 
