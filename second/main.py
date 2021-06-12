@@ -1,5 +1,5 @@
 from plate import Plate
-from database import Database
+from database import Database, DBCloud
 from ImageHandle import *
 from hx711 import HX711
 from baiduAPI import BaiduAPI
@@ -92,7 +92,7 @@ class RecgProcess(Process):
                 continue
 
             print("> 识别完成")
-            self.wechatSubs.sendMsg("本次用餐结束", "快来看看您的本餐情况吧")
+            # self.wechatSubs.sendMsg("本次用餐结束", "快来看看您的本餐情况吧")
             self.end_flag = True
 
     def checkAnyWeight(self):
@@ -148,9 +148,9 @@ class CapProcess(Process):
 
 if __name__ == '__main__':
     GPIO.setmode(GPIO.BCM)
-    db_ip = "192.168.43.1"
+    db_ip = "192.168.43.131"
     camera_id = 0
-    db = Database(f"mongodb://{db_ip}:27017/", "smartCanteen")
+    db = Database(f"mongodb://{db_ip}:27017/", "SmartCanteen")
     wechatSubscribe = WechatSubscribe()
     cap = cv2.VideoCapture(camera_id)
     img_queue = Queue(1)
