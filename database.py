@@ -186,7 +186,7 @@ class DBCloud:
 
     def updateUser(self, name: str, change: dict):
         accessToken = self.get_access_token()
-        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
+        url = '{0}tcb/databaseupdate?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
         collection = "db.collection('testlist').where({id:"
         text = "}).update({data:"
@@ -196,9 +196,7 @@ class DBCloud:
             "env": self.ENV,
             "query": query
         }
-        print(data)
         response = requests.post(url, data=json.dumps(data))
-        print(response.json())
         if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
