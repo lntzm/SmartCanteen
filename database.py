@@ -220,15 +220,18 @@ class DBCloud:
 
     def updateNoEatenPlate(self, name: str, change: dict):
         accessToken = self.get_access_token()
-        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
+        url = '{0}tcb/databaseupdate?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
-        query = "db.collection('plate').where({plate_id:%s, eaten: False}).update({data:%s})"%(name_str, str(change))
-        # print(query)
+        collection = "db.collection('plate').where({eaten:'False', plate_id:"
+        text = "}).update({data:"
+        query = collection + name_str + text + str(change) + "})"
+        print(query)
         data = {
             "env": self.ENV,
             "query": query
         }
         response = requests.post(url, data=json.dumps(data))
+        print(response.json())
         if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True

@@ -183,11 +183,11 @@ class PlateRecgThread(Thread):
 
                 ######## start faking ##########
                 print("> 开始进行菜品识别")
-                if plate.id == '0006' or plate.id == '0002':
+                if plate.id == '0001' or plate.id == '0000':
                     plate.name = "米饭"
                 elif plate.id == '0001':
                     plate.name = "土豆丝"
-                elif plate.id == '0005':
+                elif plate.id == '0002':
                     plate.name = "豆角炒肉"
                 elif plate.id == '0004':
                     plate.name = "豉油蒸排骨"
