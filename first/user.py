@@ -8,7 +8,7 @@ class User:
         self.balance = 0
         self.__faceRCN = FaceRCN()  # 人脸识别api
 
-    def getID(self, img_rgb, group_id="test"):
+    def getID(self, img_rgb, group_id="formal1"):
         """
         人脸识别获取用户ID
         :param
@@ -24,13 +24,10 @@ class User:
         # else:
         #     return None  # 没找到
         if search_result is not None:  # 如果找到的话 返回用户id
-            self.id = search_result['user_id']
+            self.id = search_result
             return True
         else:
             return False  # 没找到
-
-    def getBalance(self, db):
-        self.balance = db.findUser(self.id)["balance"]
 
     def saveInfo(self, db):
         """
@@ -40,12 +37,13 @@ class User:
         db.mergeUserRecord({'user_id': self.id})
 
     def pay(self, db):
+        self.balance = db.findUser(self.id)["balance"]
         prices = 0
         for plate in db.getRecord():
             prices += plate["price"]
 
         db.updateUser(self.id, {'balance': self.balance - prices})
-
+        db.syncUser(self.id, {'money': self.balance - prices})
 
 if __name__ == '__main__':
         # 测试getID

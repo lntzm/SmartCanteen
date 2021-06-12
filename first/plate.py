@@ -1,4 +1,5 @@
 from datetime import datetime
+import cv2
 
 
 class Plate:
@@ -7,8 +8,12 @@ class Plate:
         self.eaten = False  # 第一次，没有吃过
         self.name = ""  # 菜品名
         self.__db_info = {}
+        self.QRCodeDetector = cv2.wechat_qrcode_WeChatQRCode("./wechatQRCode/detect.prototxt",
+                                                             "./wechatQRCode/detect.caffemodel",
+                                                             "./wechatQRCode/sr.prototxt",
+                                                             "./wechatQRCode/sr.caffemodel")
 
-    def getID(self, baiduAPI, image_buffer) -> bool:
+    def getID(self, baiduAPI, img) -> bool:
         """
         二维码识别获取盘子ID
         :param image: 输入图片
@@ -20,11 +25,12 @@ class Plate:
         #                                           "wechatQRCode/sr.caffemodel")
         # # 识别结果和位置
         # self.id, points = detector.detectAndDecode(image)
-        self.id = baiduAPI.getNumberResult(image_buffer)
-        if not self.id:
+        # self.id = baiduAPI.getNumberResult(img)
+        res, _ = self.QRCodeDetector.detectAndDecode(img)
+        if not res:
             return False
-        else:
-            return True
+        self.id = res[0]
+        return True
 
     def getName(self, baiduAPI, image_buffer) -> bool:
         """
@@ -33,7 +39,7 @@ class Plate:
         :param image: 输入图片
         """
         self.name, prob, _ = baiduAPI.getDishResult(image_buffer)
-        if not self.name or float(prob) < 0.6:
+        if not self.name or self.name == "非菜" or float(prob) < 0.6:
             return False
 
         return True
@@ -47,7 +53,7 @@ class Plate:
         :return: 字典类型，所有成员变量
         """
         plate = {
-            "_id": self.id,
+            "plate_id": self.id,
             "eaten": self.eaten,
             "dish_name": self.name,
             "calories": self.__db_info['calories'],
@@ -57,6 +63,6 @@ class Plate:
             "weight": self.__db_info['weight'],
             "price": self.__db_info['price'],
             "date": datetime.now().strftime('%Y-%m-%d'),
-            "time": datetime.now().strftime('%H:%M')
+            "start_time": datetime.now().strftime('%H:%M')
         }
         db.addRecord(plate)
