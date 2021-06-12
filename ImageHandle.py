@@ -2,6 +2,7 @@ import cv2
 import base64
 import numpy as np
 
+
 def splitImg(image):
     # 先将图像转化成灰度，再转化成二值图像
     mask = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
@@ -32,22 +33,39 @@ def b64DecodeCV(image):
     npimg = np.frombuffer(img, dtype=np.uint8)
     return cv2.imdecode(npimg, 1)
 
-def synchronize(locs, weights):
-    num_conflict = False
-    if len(locs) != len(weights):
-        num_conflict = True
-        print("> numbers of splited images and weight sensors conflict")
-        return num_conflict, None
 
-    # get indexes of x in locs from small to large
-    # weight_sorts = sorted(range(len(locs)), key=lambda i: locs[i][0])
-    # weights = [weights[i] for i in weight_sorts]
-    locs_array = np.array([locs[i][0] for i in range(len(locs))])
-    locs_sorts = np.sort(locs_array)
-    weights_index = []
-    for loc in locs_array:
-        weights_index.append(np.where(locs_sorts == loc)[0][0])
+# def synchronize(locs, weights):
+#     num_conflict = False
+#     if len(locs) != len(weights):
+#         num_conflict = True
+#         print("> numbers of splited images and weight sensors conflict")
+#         return num_conflict, None
+#
+#     # get indexes of x in locs from small to large
+#     # weight_sorts = sorted(range(len(locs)), key=lambda i: locs[i][0])
+#     # weights = [weights[i] for i in weight_sorts]
+#     locs_array = np.array([locs[i][0] for i in range(len(locs))])
+#     locs_sorts = np.sort(locs_array)
+#     weights_index = []
+#     for loc in locs_array:
+#         weights_index.append(np.where(locs_sorts == loc)[0][0])
+#
+#     weights = [weights[i] for i in weights_index]
+#
+#     return num_conflict, weights
 
-    weights = [weights[i] for i in weights_index]
 
-    return num_conflict, weights
+def sortImgByHX711(images, locs, got_weight):
+    sync_images = [None, None, None]
+    locs_x = np.array(locs)[:, 0]
+    # 根据locs_x的大小逆序对images排序
+    images = np.array(images)[locs_x.argsort()[::-1]].tolist()
+    index = 0
+    for i in range(got_weight.size):
+        if not got_weight[i]:
+            continue
+        sync_images[i] = images[index]
+        index += 1
+    return sync_images
+
+
