@@ -84,7 +84,6 @@ class Face_search(Process):
             self.disp_face()
 
             if self.frame_count % self.search_freq == 0 and self.user_start_flag:
-                print("> 输入人脸")
                 if self.user_img_buffer.full():
                     _ = self.user_img_buffer.get()
                 self.user_img_buffer.put(self.frame)
