@@ -11,7 +11,7 @@ from baiduAPI import BaiduAPI
 #     res, points = detector.detectAndDecode(img)
 #     return res
 
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 count = 0
 start = 0
 baiduAPI = BaiduAPI()
@@ -22,6 +22,8 @@ while True:
         print('No camera')
         continue
     # cv2.imwrite("test.jpg", frame)
+    cv2.imshow('client', frame)
+
 
     # if count % 2:
     #     start = time.time()
@@ -30,18 +32,9 @@ while True:
 
 
 
-    imgs,_ = splitImg(frame)
-    img = imgs[0]
-
-    name, prob, _ = baiduAPI.getDishResult(CVEncodeb64(img))
-    print(name, prob)
-    cv2.imwrite("米饭4.jpg", img)
-    break
-
-
-
     # cv2.imshow('client', frame)
     # count += 1
+
 
     # images, img_marked = splitImg(frame)
     # if not images:
