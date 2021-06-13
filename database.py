@@ -83,16 +83,16 @@ class Database:
         condition = {'_id': user_id}
         self.users_db.update_one(condition, {'$set': change})
 
-    def updatePlate(self, dish_id: str, change: dict):
-        condition = {'plate_id': dish_id}
+    def updatePlate(self, plate_id: str, change: dict):
+        condition = {'plate_id': plate_id}
         self.plates_db.update_one(condition, {'$set': change})
 
-    def updateNoEatenPlate(self, dish_id: str, change: dict):
-        condition = {'plate_id': dish_id, 'eaten': False}
+    def updateNoEatenPlate(self, plate_id: str, change: dict):
+        condition = {'plate_id': plate_id, 'eaten': False}
         self.plates_db.update_one(condition, {'$set': change})
 
-    def pushUpdateNoEatenPlate(self, dish_id: str, change: dict):
-        self.db_cloud.updateNoEatenPlate(dish_id, change)
+    def pushUpdateNoEatenPlate(self, plate_id: str, change: dict):
+        self.db_cloud.updateNoEatenPlate(plate_id, change)
 
     def addRecord(self, plate: dict):
         self.record.insert_one(plate)
@@ -121,8 +121,6 @@ class Database:
         self.db_cloud.addDish(dishes)
 
     def syncUser(self, id: str, change: dict):
-        print(id)
-        print(change)
         self.db_cloud.updateUser(id, change)
 
     def cleanRecord(self):
@@ -191,7 +189,6 @@ class DBCloud:
         collection = "db.collection('testlist').where({id:"
         text = "}).update({data:"
         query = collection + name_str + text + str(change) + "})"
-        print(query)
         data = {
             "env": self.ENV,
             "query": query
@@ -203,7 +200,7 @@ class DBCloud:
 
     def updatePlate(self, name: str, change: dict):
         accessToken = self.get_access_token()
-        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
+        url = '{0}tcb/databaseupdate?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
         collection = "db.collection('plate').where({plate_id:"
         text = "}).update({data:"
@@ -225,20 +222,18 @@ class DBCloud:
         collection = "db.collection('plate').where({eaten:'False', plate_id:"
         text = "}).update({data:"
         query = collection + name_str + text + str(change) + "})"
-        print(query)
         data = {
             "env": self.ENV,
             "query": query
         }
         response = requests.post(url, data=json.dumps(data))
-        print(response.json())
         if json.loads(response.text)['errcode'] != 0:  # 更新失败
             return False
         return True
 
     def updateDish(self, name: str, change: dict):
         accessToken = self.get_access_token()
-        url = '{0}tcb/databaseadd?access_token={1}'.format(self.WECHAT_URL, accessToken)
+        url = '{0}tcb/databaseupdate?access_token={1}'.format(self.WECHAT_URL, accessToken)
         name_str = "'" + name + "'"
         collection = "db.collection('dish').where({_id:"
         text = "}).update({data:"

@@ -13,7 +13,7 @@ class Plate:
                                                              "./wechatQRCode/sr.prototxt",
                                                              "./wechatQRCode/sr.caffemodel")
 
-    def getID(self, baiduAPI, img) -> bool:
+    def getID(self, img) -> bool:
         """
         二维码识别获取盘子ID
         :param image: 输入图片

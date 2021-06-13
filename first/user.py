@@ -45,8 +45,9 @@ class User:
         db.updateUser(self.id, {'balance': self.balance - prices})
         db.syncUser(self.id, {'money': self.balance - prices})
 
+
 if __name__ == '__main__':
-        # 测试getID
+    # 测试getID
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     frame = [None]
 
