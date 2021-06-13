@@ -1,12 +1,12 @@
 from plate import Plate
-from database import Database, DBCloud
-from ImageHandle import *
+from database import Database
 from hx711 import HX711
-from baiduAPI import BaiduAPI
 from wechatSubscribe import WechatSubscribe
 
 import RPi.GPIO as GPIO
 from multiprocessing import Process, Queue
+import numpy as np
+import cv2
 
 
 class RecgProcess(Process):
@@ -57,7 +57,6 @@ class RecgProcess(Process):
                 print("> 压力传感器未检测到餐盘")
                 continue
 
-            # images, locs = splitImg(frame)
             codes, locs = self.QRCodeDetector.detectAndDecode(frame)
             print(codes)
             if not codes:
