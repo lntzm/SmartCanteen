@@ -161,7 +161,7 @@ class PlateRecgThread(Thread):
             for image in images:
                 plate = Plate()
                 print("> 开始检测餐盘id")
-                id_found = plate.getID(self.baiduAPI, image)
+                id_found = plate.getID(image)
                 if not id_found:
                     print("  > 未发现餐盘id")
                     break

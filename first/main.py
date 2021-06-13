@@ -158,13 +158,13 @@ class Main_app(QMainWindow, Ui_MainWindow):
 
         # 关闭菜品显示进程
         self.plate_recognize_proc.stop()
-        time.sleep(0.3)
+        time.sleep(0.1)
         self.plate_recognize_proc.terminate()
         self.plate_recognize_proc.join()
 
         # 关闭人脸检测进程
         self.face_search_proc.stop()
-        time.sleep(0.3)
+        time.sleep(0.1)
         self.face_search_proc.terminate()
         self.face_search_proc.join()
 
