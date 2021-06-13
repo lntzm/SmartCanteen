@@ -36,7 +36,7 @@ def predict(model, transform, image):
 
 
 if __name__ == '__main__':
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     device = torch.device("cuda:0")
     model = torch.load('./dish/model/model.pkl')
     # model.to(device)
@@ -51,16 +51,17 @@ if __name__ == '__main__':
         if not ret:
             print('No camera')
             continue
-        cv2.imshow('frame', frame)
+        # cv2.imshow('frame', frame)
         imgs,_ = splitImg(frame)
         img = imgs[0]
-        index = input("input index:")
+        # index = input("input index:")
         # cv2.imwrite("test.jpg", frame)
         # cv2.imshow('client', frame)
         start = time.time()
-        prediction = predict(model, transform, frame)
+        prediction = predict(model, transform, img)
         print(f"预测结果: {prediction}，用时{time.time() - start}")
-        cv2.imwrite('test'+index+'.jpg', img)
+        cv2.imwrite('./test/弱光照/炒豆角.jpg', img)
+        break
 
         # if count % 2:
         #     start = time.time()

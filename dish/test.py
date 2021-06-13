@@ -36,7 +36,7 @@ def predict(model, transform, img_path):
 
 
 if __name__ == '__main__':
-    test_root = './dish/test'
+    test_root = './test'
     device = torch.device("cuda:0")
     model = torch.load('./dish/model/model.pkl')
     # model.to(device)
@@ -46,8 +46,13 @@ if __name__ == '__main__':
         transforms.Normalize(mean=[0.5, 0.5, 0.5],
                              std=[0.5, 0.5, 0.5])
     ])
-    start = time.time()
-    for img_name in os.listdir(test_root):
-        img_path = os.path.join(test_root, img_name)
-        prediction = predict(model, transform, img_path)
-        print(f"{img_name} 预测结果: {prediction}，用时{time.time() - start}")
+    for situation in os.listdir(test_root):
+        img_root = os.path.join(test_root, situation)
+        if os.path.isfile(img_root):
+            continue
+        print(f"-----{situation}-----")
+        for img_name in os.listdir(img_root):
+            img_path = os.path.join(img_root, img_name)
+            start = time.time()
+            prediction = predict(model, transform, img_path)
+            print(f"{img_name} 预测结果: {prediction}，用时{time.time() - start}")

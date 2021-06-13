@@ -6,7 +6,7 @@ import numpy as np
 def splitImg(image):
     # 先将图像转化成灰度，再转化成二值图像
     mask = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
-    _, mask = cv2.threshold(mask, 185, 255, cv2.THRESH_BINARY)
+    _, mask = cv2.threshold(mask, 125, 255, cv2.THRESH_BINARY)
     # 检测边缘
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     images = []
