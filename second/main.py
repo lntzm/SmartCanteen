@@ -37,6 +37,7 @@ class RecgProcess(Process):
             if self.end_flag:  # 完成了识别，需要拿走所有餐盘
                 if self.checkAnyWeight():  # 还有重量，continue
                     print("> 请拿走餐盘")
+                    # GPIO.output(switchOut, GPIO.HIGH)
                     continue
                 else:  # 全部拿走了，开始下一轮识别
                     self.id_found = np.array([False, False])
@@ -47,6 +48,7 @@ class RecgProcess(Process):
                 continue
 
             print("> 开始检测")
+            GPIO.output(switchOut, GPIO.LOW)
             for hx, plate in zip(self.hxs, self.plates):
                 plate.getWeight(hx)
             self.got_weight = (np.array([
@@ -87,14 +89,15 @@ class RecgProcess(Process):
 
                 self.id_found[i] = True
                 plate.updateInfo(self.db)
-
+                
             if not info_found:
                 continue
 
             print("> 识别完成")
+            GPIO.output(switchOut, GPIO.HIGH)
             # self.wechatSubs.sendMsg("本次用餐结束", "快来看看您的本餐情况吧")
             self.end_flag = True
-
+    
     def checkAnyWeight(self):
         weights = []
         for hx in self.hxs:
@@ -132,7 +135,7 @@ class CapProcess(Process):
         self.cap = cap
 
     def run(self) -> None:
-        frame_count = 0
+        frame_count = 0  
         while True:
             ret, frame = self.cap.read()
             if not ret:
@@ -148,8 +151,10 @@ class CapProcess(Process):
 
 if __name__ == '__main__':
     GPIO.setmode(GPIO.BCM)
+    switchOut = 24
+    GPIO.setup(switchOut, GPIO.OUT)
     db_ip = "192.168.43.131"
-    camera_id = 0
+    camera_id = 1
     db = Database(f"mongodb://{db_ip}:27017/", "SmartCanteen")
     wechatSubscribe = WechatSubscribe()
     cap = cv2.VideoCapture(camera_id)
