@@ -18,7 +18,8 @@ dish_dict = {
             8: "红烧茄子",
             9: "炒花菜",
             10: "凉拌海带丝",
-            11: "炒豆角"
+            11: "豆角炒肉",
+            12: "豉油蒸排骨"
         }
 
 
@@ -36,7 +37,7 @@ def predict(model, transform, img_path):
 
 
 if __name__ == '__main__':
-    test_root = './test'
+    img_root = './dish/test'
     device = torch.device("cuda:0")
     model = torch.load('./dish/model/model.pkl')
     # model.to(device)
@@ -46,13 +47,7 @@ if __name__ == '__main__':
         transforms.Normalize(mean=[0.5, 0.5, 0.5],
                              std=[0.5, 0.5, 0.5])
     ])
-    for situation in os.listdir(test_root):
-        img_root = os.path.join(test_root, situation)
-        if os.path.isfile(img_root):
-            continue
-        print(f"-----{situation}-----")
-        for img_name in os.listdir(img_root):
-            img_path = os.path.join(img_root, img_name)
-            start = time.time()
-            prediction = predict(model, transform, img_path)
-            print(f"{img_name} 预测结果: {prediction}，用时{time.time() - start}")
+    for img_name in os.listdir(img_root):
+        img_path = os.path.join(img_root, img_name)
+        prediction = predict(model, transform, img_path)
+        print(f"{img_name} 预测结果: {prediction}")

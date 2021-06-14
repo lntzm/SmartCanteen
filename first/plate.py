@@ -1,11 +1,10 @@
 from datetime import datetime
 import torch
 from torchvision import transforms
-
-from ImageHandle import b64DecodeCV
 import cv2
 from PIL import Image
 
+from dish.test import dish_dict
 
 class Plate:
     def __init__(self):
@@ -22,20 +21,6 @@ class Plate:
             transforms.Normalize(mean=[0.5, 0.5, 0.5],
                                  std=[0.5, 0.5, 0.5])
         ])
-        self.dish_dict = {
-            0: "土豆丝",
-            1: "红烧肉",
-            2: "米饭",
-            3: "清蒸鱼",
-            4: "油焖虾",
-            5: "炒青菜",
-            6: "番茄炒蛋",
-            7: "红烧鸡腿",
-            8: "红烧茄子",
-            9: "炒花菜",
-            10: "凉拌海带丝",
-            11: "炒豆角"
-        }
         self.QRCodeDetector = cv2.wechat_qrcode_WeChatQRCode("./wechatQRCode/detect.prototxt",
                                                              "./wechatQRCode/detect.caffemodel",
                                                              "./wechatQRCode/sr.prototxt",
@@ -73,7 +58,7 @@ class Plate:
         output = self.model(image)
         _, prediction = torch.max(output, 1)
         dish_key = prediction.tolist()[0]
-        self.name = self.dish_dict[dish_key]
+        self.name = dish_dict[dish_key]
         return True
 
     def searchDB(self, db):

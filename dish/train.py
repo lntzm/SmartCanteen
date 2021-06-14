@@ -40,6 +40,12 @@ def my_resnet18(num_classes):
     return model
 
 
+def my_resnet34(num_classes):
+    model = models.resnet34(pretrained=True)
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, num_classes)
+    return model
+
 def train_model(num_epochs=25):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -191,10 +197,10 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(val_dataset, batch_size=8, num_workers=4)
 
     device = torch.device("cuda:0")
-    model = my_resnet18(num_classes=12)
+    model = my_resnet18(num_classes=13)
     model.to(device)
 
-    model = train_model(num_epochs=5)
+    model = train_model(num_epochs=6)
 
     torch.save(model, './dish/model/model.pkl')
 
