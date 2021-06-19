@@ -1,0 +1,55 @@
+<!--pages/history/history.wxml-->
+
+
+<!--pages/history-bill/history-bill.wxml-->
+<view class="ui-flex-ver ui-height-100">
+
+<!--顶部查询时间选择-->
+<view class="date-select">
+  <view >开始时间:</view>
+  <picker class="ui-ml20" mode="date" value="{{startDate}}" start="2015-09-01" end="endDate" bindchange="startDateChange">
+    <view class="picker-date">
+      {{startDate}}
+    </view>
+  </picker>
+  <view class="ui-ml20">结束时间:</view>
+  <picker class="ui-ml20" mode="date" value="{{startDate}}" start="startdDate" end="today" bindchange="endDateChange">
+    <view class="picker-date">
+      {{endDate}}
+    </view>
+  </picker>
+</view>
+<view class="line"></view>
+<view class='ui-p10'>
+  <text>总花费金额:</text>
+  <text class="picker-date ui-ml20">{{totalMoney}}</text>
+</view>
+<view class='ui-p10'>
+  <text>用户余额:</text>
+  <text class="picker-date ui-ml20">{{totalMoney}}</text>
+</view>
+<view class="line"></view>
+<!--上方文字标题-->
+<view class="history-bill-table-title">
+  <view class="ui-flex-1">日期</view>
+  <view class="ui-flex-1">食用菜品</view>
+  <view class="ui-flex-1">价格/元</view>
+</view>
+<view class="line"></view>
+
+
+<!--账单列表-->
+<view class='view-scroll'>
+<scroll-view scroll-y="true" class="ui-height-100 " >
+  <block wx:for="{{historyBillList}}">
+    <view class="history-bill-list " bindtap="onHisterBillItemClick"  data-id="{{item.BillNo}}"  bindtouchstart="onTouchStart" bindtouchend = "onTouchEnd" >
+      <view class="ui-flex-1">{{item.date}}</view>
+      <view class="ui-flex-1">{{item.dish_name}}</view>
+      <view class="ui-flex-1 ui-flex ui-flex-center ">
+       <text class="item-remarks">{{item.price}}</text>
+         </view>
+    </view>
+  </block>
+</scroll-view>
+</view>
+</view>

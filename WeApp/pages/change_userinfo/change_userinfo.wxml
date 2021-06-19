@@ -1,0 +1,35 @@
+<!--pages/change_userinfo/change_userinfo.wxml-->
+<view class="title">
+		<text class="title-text">修改个人信息</text>
+  </view>
+  <view class = "info">
+    <text class="info-text">昵称：</text>
+    <input class="info-text" value="{{dataobj.nickname}}" bindinput="bindKeyInput_nickname"></input>
+</view>
+<view class="info">
+    <text class="info-text">年龄：</text>
+    <input class="info-text" type="number" value="{{dataobj.age}}" bindinput="bindKeyInput_age" ></input><text class="info-text" > 岁</text>
+</view>
+<view class="info">
+    <text class="info-text">性别：</text>
+    <radio-group class="radio-group" bindchange="radioChange">
+		<label class="radio {{!item.show?'disabled':item.checked?'active':'' }}" wx:for="{{items}}">
+			<radio value="{{item.value}}" checked="{{item.checked}}" disabled="{{!item.show}}" style="display:none;"/>
+			{{item.name}}
+		</label>
+	</radio-group>
+
+</view>
+<view class="info">
+    <text class="info-text">身高：</text>
+    <input class="info-text" type="number" value="{{dataobj.height}}" bindinput="bindKeyInput_height"></input><text class="info-text" > cm</text>
+</view>
+<view class="info">
+    <text class="info-text">体重：</text>
+    <input class="info-text" type="number" value="{{dataobj.weight}}" bindinput="bindKeyInput_weight"></input><text class="info-text" > kg</text>
+</view>
+<view class="change-buttom"></view>
+<button class='bottom' type='primary' open-type="getUserInfo" lang="zh_CN" bindtap="change_info">
+            修改个人信息
+</button>
+

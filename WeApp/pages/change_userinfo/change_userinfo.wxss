@@ -1,0 +1,129 @@
+/* pages/change_userinfo/change_userinfo.wxss */
+/* pages/userinfo/userinfo.wxss */
+.title
+{
+  width:100%;
+  height:80rpx;
+  margin-top:10rpx;   
+  justify-content: center;
+  align-items: center;
+  border-bottom:1rpx solid #BBBBBB;
+  display: flex;
+  flex-direction: column;
+}
+.title-text
+{
+  color: #2A2A2A;
+  font-size: 35rpx;
+  font-family: Roboto-regular;
+  text-align: center;
+  position: absolute;
+
+}
+.info
+{
+  width:100%;
+  height:60rpx;
+  margin-top:5rpx;
+  margin-bottom: 5rpx;   
+  justify-content: left;
+  align-items: left;
+  vertical-align: bottom;
+  padding-top:5px;
+  border-bottom:1rpx solid #BBBBBB;
+  display: flex;
+  flex-direction: row;
+}
+.info-left
+{
+  width:20%;
+  height:80rpx;
+  margin-top:5rpx;
+  margin-bottom:5rpx;   
+  justify-content: center;
+  align-items: left;
+  display: flex;
+  flex-direction: column;
+}
+.info-right
+{
+  width:75%;
+  height:80rpx;
+  margin-top:10rpx;   
+  text-align: right;
+  display: flex;
+  flex-direction: row;
+  vertical-align: bottom;
+}
+.info-text
+{
+  width: 15%;
+  color: #2A2A2A;
+  font-size: 35rpx;
+  font-family: Roboto-regular;
+}
+.info-text-right
+{
+  width: 75%;
+  color: #2A2A2A;
+  font-size: 35rpx;
+  font-family: Roboto-regular;
+  text-align: right;
+  position: absolute;
+  vertical-align: bottom;
+}
+.info-text-left
+{
+  width: 75%;
+  color: #2A2A2A;
+  font-size: 35rpx;
+  font-family: Roboto-regular;
+  text-align: left;
+  position: absolute;
+  vertical-align: bottom;
+}
+.text-info
+{
+
+
+}
+.bottom {
+  border-radius: 80rpx;
+  margin: 2rpx 2rpx;
+  text-align: center;
+  font-size: 30rpx;
+  height:30px ;
+  width: 75 x;
+}
+.change-buttom
+{
+  width:100%;
+  height:100rpx;
+  margin-top:10rpx;   
+  justify-content: left;
+  align-items: left;
+  display: flex;
+  flex-direction: row;
+
+}
+.radio-group .radio {
+  background: #FFFFFF;
+  border: 1px solid #D6D6D6;
+  border-radius: 2px;
+  padding:3px 12px;
+  text-align:center;
+  font-size: 10px;
+}
+.radio-group .radio.active {
+  background: #ffffff ;
+  border-color: #0097e0;
+  color: #0097e0;
+  background-size: 14px;
+}
+
+.radio-group .radio.disabled {
+  background: #f0f0f0;
+  border: 0;
+  color: #0097e0;
+  color: #9fa2ae;
+}

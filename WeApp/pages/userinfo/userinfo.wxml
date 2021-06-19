@@ -1,0 +1,49 @@
+<view class="title">
+		<text class="title-text">个人信息</text>
+  </view>
+  <view class="info">
+  <view class="info-left">
+    <text class="info-text">昵称：</text>
+  </view>
+  <view class="info-left">
+    <text class="info-text-right">{{dataobj.nickname}}</text>
+  </view>
+</view>
+<view class="info">
+  <view class="info-left">
+    <text class="info-text">年龄：</text>
+  </view>
+  <view class="info-left">
+    <text class="info-text-right">{{dataobj.age}} 岁</text>
+  </view>
+</view>
+<view class="info">
+  <view class="info-left">
+    <text class="info-text">性别：</text>
+  </view>
+  <view class="info-left" wx:if="{{gender==1}}"><text class="info-text-right">男</text></view>
+  <view class="info-left" wx:elif="{{gender==2}}"><text class="info-text-right">女</text></view>
+  <view class="info-left" wx:else>
+    <text class="info-text-right">保密</text>
+  </view>
+</view>
+<view class="info">
+  <view class="info-left">
+    <text class="info-text">身高：</text>
+  </view>
+  <view class="info-left">
+    <text class="info-text-right">{{dataobj.height}} cm</text>
+  </view>
+</view>
+<view class="info">
+  <view class="info-left">
+    <text class="info-text">体重：</text>
+  </view>
+  <view class="info-left">
+    <text class="info-text-right">{{dataobj.weight}} kg</text>
+  </view>
+</view>
+<view class="change-buttom"></view>
+<button class='bottom' type='primary' open-type="getUserInfo" lang="zh_CN" bindtap="goto_change_userinfo">
+            修改个人信息
+</button>

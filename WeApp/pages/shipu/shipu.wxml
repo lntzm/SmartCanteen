@@ -1,0 +1,45 @@
+<!--pages/shipu/shipu.wxml-->
+<view class="table">
+ <view class="tr bg-g">
+ <view class="td">周一</view>
+ <button class="td2" bindtap="jump1">
+  查看菜谱
+</button>
+ </view>
+ <view class="tr">
+ <view class="td">周二</view>
+ <button class="td2" bindtap="jump2">
+  查看菜谱
+</button>
+ </view>
+ <view class="tr bg-g">
+ <view class="td">周三</view>
+ <button class="td2" bindtap="jump3">
+  查看菜谱
+</button>
+ </view>
+ <view class="tr">
+ <view class="td">周四</view>
+ <button class="td2" bindtap="jump4">
+  查看菜谱
+</button>
+ </view>
+ <view class="tr bg-g">
+ <view class="td">周五</view>
+ <button class="td2" bindtap="jump5">
+  查看菜谱
+</button>
+ </view>
+ <view class="tr">
+ <view class="td">周六</view>
+ <button class="td2" bindtap="jump6">
+  查看菜谱
+</button>
+ </view>
+ <view class="tr bg-g">
+ <view class="td">周日</view>
+ <button class="td2" bindtap="jump7">
+  查看菜谱
+</button>
+ </view>
+</view>

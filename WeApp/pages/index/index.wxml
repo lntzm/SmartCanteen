@@ -1,0 +1,79 @@
+<view wx:if="{{isHide}}">
+    <view wx:if="{{canIUse}}" >
+        <view class='header'>
+          <image src='/img/logo.png'></image>
+        </view>
+ 
+        <view class='content'>
+            <view>申请获取以下权限</view>
+            <text>获得你的公开信息(昵称，头像等)</text>
+        </view>
+ 
+        <button class='bottom' type='primary' open-type="getUserInfo" lang="zh_CN" bindgetuserinfo="bindGetUserInfo">
+            授权登录
+        </button>
+    </view>
+    <view wx:else>请升级微信版本</view>
+</view>
+
+<view wx:else class="container_index">
+  <view class="view1">
+    <view>
+      <text class="index-text">欢迎使用智慧饭堂管理系统</text>
+    </view>
+    <view>
+      <text class="index-text">今日饭堂菜品有：</text>
+      <block wx:for="{{canteenobj.food}}" data-item="item">
+        <view class="index-text">
+          {{item}}
+        </view>
+      </block>
+    </view>
+    
+  </view>
+  <view class="view2">
+    <view><text class="index-text">今日消费菜品：</text></view>
+    <block wx:for="{{platesobj}}" wx:key="{[_id]}">
+        <text class="index-text">{{item.dish_name}}, </text>
+      </block>
+      <view><text class="index-text">账户余额：</text>
+        <text class="index-text">{{user_money}}</text></view>
+      
+  </view>
+<view class = "view4">
+  <view>
+      <text class="index-text">今日浪费食物：</text>
+      <text class="index-text">{{remain}}</text>
+      <text>克</text>
+      <text class="index-text">
+        今日消费：</text>
+      <text class="index-text">{{today_money}}</text>
+      <text>元</text>
+    </view>
+  <view class="tr bg-g">
+ <view class="td">热量/营养素</view>
+ <view class="td">今日摄入</view>
+ <view class="td">建议摄入</view>
+ </view>
+ <view class="tr bg-g">
+ <view class="td">热量</view>
+ <view class="td">{{calories}}千卡</view>
+ <view class="td">{{recommend_calories}}千卡</view>
+ </view>
+ <view class="tr bg-g">
+ <view class="td">脂肪</view>
+ <view class="td">{{fat}}克</view>
+ <view class="td">{{recommend_fat}}克</view>
+ </view>
+ <view class="tr bg-g">
+ <view class="td">蛋白质</view>
+ <view class="td">{{protein}}克</view>
+ <view class="td">{{recommend_protein}}克</view>
+ </view>
+ <view class="tr bg-g">
+ <view class="td">碳水</view>
+ <view class="td">{{carbo}}克</view>
+ <view class="td">{{recommend_carbo}}克</view>
+ </view>
+</view>
+</view>

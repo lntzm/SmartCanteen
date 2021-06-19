@@ -1,0 +1,47 @@
+{
+  "pages": [
+   
+    "pages/index/index",
+    "pages/logs/logs",
+    "pages/shipu/shipu",
+    "pages/chongzhi/chongzhi",
+    "pages/mine/mine",
+    "pages/change_userinfo/change_userinfo",
+    "pages/userinfo/userinfo",
+    "pages/history/history",
+    "pages/shipu_detail/shipu_detail"
+    
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "智慧饭堂餐饮系统",
+    "backgroundColor": "#eeeeee",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "主页",
+        "iconPath": "img/_index.jpg",
+        "selectedIconPath": "img/index.jpg"
+      },
+      {
+        "pagePath": "pages/shipu/shipu",
+        "text": "饭堂菜谱",
+        "iconPath": "img/_shipu.jpg",
+        "selectedIconPath": "img/shipu.jpg"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "img/_wode.jpg",
+        "selectedIconPath": "img/wode.jpg"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "darkmode": false
+}
